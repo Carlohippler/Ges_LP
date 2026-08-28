@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GES — Gerenciador Empresarial Simplificado</title>
+  <meta name="description" content="O GES reúne vendas, estoque, financeiro e relatórios em um único painel. Simples de configurar, poderoso o suficiente para escalar com o seu negócio." />
+
+  <!-- Open Graph — apresentação ao compartilhar em WhatsApp e redes sociais -->
+  <!-- og:url e og:image devem ser preenchidos com a URL final de publicação e uma imagem de 1200x630px -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="GES — Gerenciador Empresarial Simplificado" />
+  <meta property="og:description" content="Vendas, estoque, financeiro e relatórios em um único painel. Teste grátis por 14 dias, sem cartão de crédito." />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GES — Gerenciador Empresarial Simplificado" />
+  <meta name="twitter:description" content="Vendas, estoque, financeiro e relatórios em um único painel. Teste grátis por 14 dias, sem cartão de crédito." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -86,6 +99,34 @@
       padding-inline: var(--section-px);
     }
 
+    /* Scroll-reveal — elementos entram suavemente ao aparecer na viewport
+       (ativado via IntersectionObserver no <script> final; sem o JS, tudo
+       permanece visível normalmente) */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Atraso escalonado para grupos de cards (até 8 itens) */
+    .reveal-group > *:nth-child(1) { transition-delay: 0.02s; }
+    .reveal-group > *:nth-child(2) { transition-delay: 0.08s; }
+    .reveal-group > *:nth-child(3) { transition-delay: 0.14s; }
+    .reveal-group > *:nth-child(4) { transition-delay: 0.2s; }
+    .reveal-group > *:nth-child(5) { transition-delay: 0.26s; }
+    .reveal-group > *:nth-child(6) { transition-delay: 0.32s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -98,6 +139,11 @@
       cursor: pointer;
       transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
       white-space: nowrap;
+      /* Reset para quando a classe é usada em <button> em vez de <a> */
+      background: none;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: center;
     }
     .btn:focus-visible {
       outline: 3px solid var(--accent-teal);
@@ -364,6 +410,16 @@
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
+      animation: hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes hero-in {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero__copy, .hero__visual { animation: none; }
     }
 
     .hero__eyebrow {
@@ -475,6 +531,7 @@
       flex: 1;
       min-width: 0;
       position: relative;
+      animation: hero-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
     }
 
     /* Cartão mockup principal */
@@ -652,11 +709,27 @@
       border-radius: 4px 4px 0 0;
       background: var(--blue-glow);
       border: 1px solid rgba(37, 99, 235, 0.2);
-      transition: height 0.3s ease;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .mockup-bar.highlight {
       background: var(--blue-mid);
       border-color: var(--blue-mid);
+    }
+    /* Crescem quando o mockup entra na viewport (ver script no final da página) */
+    .mockup-chart.in-view .mockup-bar { transform: scaleY(1); }
+    .mockup-chart.in-view .mockup-bar:nth-child(1) { transition-delay: 0.03s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(2) { transition-delay: 0.08s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(3) { transition-delay: 0.13s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(4) { transition-delay: 0.18s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(5) { transition-delay: 0.23s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(6) { transition-delay: 0.28s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(7) { transition-delay: 0.33s; }
+    .mockup-chart.in-view .mockup-bar:nth-child(8) { transition-delay: 0.38s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mockup-bar { transform: scaleY(1); transition: none; }
     }
 
     /* Labels meses */
@@ -1886,6 +1959,191 @@
       .footer__legal { gap: 1rem; }
       .faq__list { gap: 0.625rem; }
     }
+
+    /* =============================================
+       MODAL — TESTAR GRÁTIS / DOWNLOAD
+       ============================================= */
+    .trial-modal {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+
+      border: none;
+      border-radius: 20px;
+      padding: 0;
+      width: min(600px, calc(100vw - 2.5rem));
+      max-height: min(88vh, 720px);
+      box-shadow: var(--shadow-xl);
+      color: var(--slate-700);
+    }
+
+    .trial-modal::backdrop {
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(3px);
+    }
+
+    /* Animação de entrada — dialog + backdrop */
+    @keyframes modal-pop {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes backdrop-fade {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .trial-modal[open] { animation: modal-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+    .trial-modal[open]::backdrop { animation: backdrop-fade 0.28s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .trial-modal[open], .trial-modal[open]::backdrop { animation: none; }
+    }
+
+    .trial-modal__inner {
+      padding: 2.25rem clamp(1.25rem, 5vw, 2.5rem) 2rem;
+      overflow-y: auto;
+      max-height: min(88vh, 720px);
+    }
+
+    .trial-modal__close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: var(--slate-100);
+      color: var(--slate-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+    .trial-modal__close:hover { background: var(--slate-200); color: var(--slate-900); }
+    .trial-modal__close:focus-visible { outline: 3px solid var(--accent-teal); outline-offset: 2px; }
+
+    .trial-modal .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--blue-faint);
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      color: var(--blue-mid);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.375rem 0.875rem;
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .trial-modal .eyebrow-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-emerald);
+    }
+
+    .trial-modal h2 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.375rem, 3.5vw, 1.75rem);
+      letter-spacing: -0.025em;
+      color: var(--slate-900);
+      line-height: 1.25;
+      margin-bottom: 0.625rem;
+    }
+
+    .trial-modal .modal-subtitle {
+      font-size: 0.9375rem;
+      color: var(--slate-500);
+      max-width: 440px;
+      margin-bottom: 1.875rem;
+    }
+
+    .primary-option {
+      background: var(--bg-page);
+      border: 1.5px solid var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+      border-radius: 16px;
+      padding: 1.375rem 1.375rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .primary-option__icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(37, 99, 235, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .primary-option__body { flex: 1; min-width: 180px; }
+    .primary-option__title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--slate-900);
+      margin-bottom: 0.2rem;
+    }
+    .primary-option__desc { font-size: 0.8125rem; color: var(--slate-500); }
+
+    .modal-divider {
+      display: flex; align-items: center; gap: 1rem;
+      color: var(--slate-400); font-size: 0.75rem; font-weight: 500;
+      margin-bottom: 1.375rem;
+    }
+    .modal-divider::before, .modal-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--slate-200);
+    }
+
+    .download-label {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--slate-500);
+      margin-bottom: 0.875rem;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .download-card {
+      background: var(--bg-white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      padding: 1.125rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .download-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+    .download-card:focus-visible { outline: 3px solid var(--accent-teal); outline-offset: 2px; }
+    .download-card__icon { width: 30px; height: 30px; color: var(--blue-mid); }
+    .download-card__os { font-weight: 600; font-size: 0.8125rem; color: var(--slate-900); }
+    .download-card__meta { font-size: 0.6875rem; color: var(--slate-400); }
+
+    .trial-modal .note {
+      font-size: 0.75rem;
+      color: var(--slate-400);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .download-grid { grid-template-columns: 1fr; }
+      .primary-option { flex-direction: column; align-items: flex-start; text-align: left; }
+      .primary-option .btn { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -1924,12 +2182,12 @@
         <!-- Ações do header -->
         <div class="header__actions">
           <a href="#entrar" class="btn btn-ghost" aria-label="Acessar sua conta">Entrar</a>
-          <a href="#teste-gratis" class="btn btn-primary btn-cta" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
+          <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 3.9L8 10.1 4.4 11.9l.7-3.9L2.2 5.2l4-.6z" fill="currentColor"/>
             </svg>
             Testar Grátis
-          </a>
+          </button>
         </div>
 
         <!-- Botão hambúrguer — visível apenas em mobile -->
@@ -1952,7 +2210,7 @@
       </nav>
       <div class="mobile-nav__actions">
         <a href="#entrar" class="btn btn-ghost">Entrar</a>
-        <a href="#teste-gratis" class="btn btn-primary btn-cta">Testar Grátis</a>
+        <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta">Testar Grátis</button>
       </div>
     </div>
   </header>
@@ -1986,12 +2244,12 @@
 
             <!-- CTAs -->
             <div class="hero__cta-group">
-              <a href="#teste-gratis" class="btn btn-primary btn-cta" id="hero-cta">
+              <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta" id="hero-cta">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 12.6A5.6 5.6 0 1 1 8 2.4a5.6 5.6 0 0 1 0 11.2zM6.3 5.1l4.2 2.5c.3.2.3.6 0 .8L6.3 10.9c-.3.2-.7 0-.7-.4V5.5c0-.4.4-.6.7-.4z" fill="currentColor"/>
                 </svg>
                 Testar Grátis por 14 Dias
-              </a>
+              </button>
               <a href="#demo" class="btn btn-ghost">
                 Ver demonstração →
               </a>
@@ -2169,7 +2427,7 @@
       <div class="container">
 
         <!-- Cabeçalho -->
-        <div class="features__header">
+        <div class="features__header reveal">
           <span class="features__eyebrow">Funcionalidades</span>
           <h2 class="features__title" id="features-title">Por que escolher o GES?</h2>
           <p class="features__subtitle">
@@ -2179,10 +2437,10 @@
         </div>
 
         <!-- Grid de 4 cards -->
-        <div class="features__grid">
+        <div class="features__grid reveal-group">
 
           <!-- Card 1 — Controle de Estoque -->
-          <article class="feat-card" aria-label="Controle de Estoque">
+          <article class="feat-card reveal" aria-label="Controle de Estoque">
             <div class="feat-card__icon-wrap feat-card__icon-wrap--blue" aria-hidden="true">
               <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 7.5h18M4 13h18M4 18.5h18" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
@@ -2208,7 +2466,7 @@
           </article>
 
           <!-- Card 2 — Gestão Financeira -->
-          <article class="feat-card" aria-label="Gestão Financeira">
+          <article class="feat-card reveal" aria-label="Gestão Financeira">
             <div class="feat-card__icon-wrap feat-card__icon-wrap--emerald" aria-hidden="true">
               <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="13" cy="13" r="10" stroke="#10b981" stroke-width="1.75"/>
@@ -2231,7 +2489,7 @@
           </article>
 
           <!-- Card 3 — PDV Integrado -->
-          <article class="feat-card" aria-label="PDV Integrado">
+          <article class="feat-card reveal" aria-label="PDV Integrado">
             <div class="feat-card__icon-wrap feat-card__icon-wrap--violet" aria-hidden="true">
               <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="4" width="20" height="14" rx="2.5" stroke="#7c3aed" stroke-width="1.75"/>
@@ -2255,7 +2513,7 @@
           </article>
 
           <!-- Card 4 — Relatórios Inteligentes -->
-          <article class="feat-card" aria-label="Relatórios Inteligentes">
+          <article class="feat-card reveal" aria-label="Relatórios Inteligentes">
             <div class="feat-card__icon-wrap feat-card__icon-wrap--amber" aria-hidden="true">
               <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 20V14M9 20V10M14 20V12M19 20V6" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
@@ -2293,16 +2551,16 @@
     <section class="testimonials" aria-labelledby="testi-title">
       <div class="container">
 
-        <div class="testimonials__header">
+        <div class="testimonials__header reveal">
           <span class="testimonials__eyebrow">Depoimentos reais</span>
           <h2 class="testimonials__title" id="testi-title">Empresários que pararam de<br>apagar incêndio no operacional</h2>
           <p class="testimonials__subtitle">Veja o que mudou depois que passaram a usar o GES no dia a dia.</p>
         </div>
 
-        <div class="testimonials__grid">
+        <div class="testimonials__grid reveal-group">
 
           <!-- Depoimento 1 -->
-          <article class="testi-card">
+          <article class="testi-card reveal">
             <div class="testi-card__stars" aria-label="5 estrelas">
               <!-- 5 estrelas preenchidas -->
               <svg viewBox="0 0 15 15" fill="#fbbf24"><path d="M7.5 1l1.5 3 3.5.5-2.5 2.5.6 3.5L7.5 9 4 10.5l.6-3.5L2 4.5 5.5 4z"/></svg>
@@ -2328,7 +2586,7 @@
           </article>
 
           <!-- Depoimento 2 -->
-          <article class="testi-card">
+          <article class="testi-card reveal">
             <div class="testi-card__stars" aria-label="5 estrelas">
               <svg viewBox="0 0 15 15" fill="#fbbf24"><path d="M7.5 1l1.5 3 3.5.5-2.5 2.5.6 3.5L7.5 9 4 10.5l.6-3.5L2 4.5 5.5 4z"/></svg>
               <svg viewBox="0 0 15 15" fill="#fbbf24"><path d="M7.5 1l1.5 3 3.5.5-2.5 2.5.6 3.5L7.5 9 4 10.5l.6-3.5L2 4.5 5.5 4z"/></svg>
@@ -2353,7 +2611,7 @@
           </article>
 
           <!-- Depoimento 3 -->
-          <article class="testi-card">
+          <article class="testi-card reveal">
             <div class="testi-card__stars" aria-label="5 estrelas">
               <svg viewBox="0 0 15 15" fill="#fbbf24"><path d="M7.5 1l1.5 3 3.5.5-2.5 2.5.6 3.5L7.5 9 4 10.5l.6-3.5L2 4.5 5.5 4z"/></svg>
               <svg viewBox="0 0 15 15" fill="#fbbf24"><path d="M7.5 1l1.5 3 3.5.5-2.5 2.5.6 3.5L7.5 9 4 10.5l.6-3.5L2 4.5 5.5 4z"/></svg>
@@ -2387,7 +2645,7 @@
     <section class="pricing" id="planos" aria-labelledby="pricing-title">
       <div class="container">
 
-        <div class="pricing__header">
+        <div class="pricing__header reveal">
           <span class="pricing__eyebrow">Planos e Preços</span>
           <h2 class="pricing__title" id="pricing-title">Simples de entender,<br>fácil de escalar</h2>
           <p class="pricing__subtitle">
@@ -2402,10 +2660,10 @@
           </div>
         </div>
 
-        <div class="pricing__grid">
+        <div class="pricing__grid reveal-group">
 
           <!-- Plano Iniciante -->
-          <article class="plan-card" aria-label="Plano Iniciante">
+          <article class="plan-card reveal" aria-label="Plano Iniciante">
             <span class="plan-card__name">Iniciante</span>
 
             <div class="plan-card__price-row">
@@ -2464,7 +2722,7 @@
           </article>
 
           <!-- Plano Profissional — DESTAQUE -->
-          <article class="plan-card plan-card--featured" aria-label="Plano Profissional — Mais Popular">
+          <article class="plan-card plan-card--featured reveal" aria-label="Plano Profissional — Mais Popular">
 
             <!-- Selo flutuante -->
             <div class="plan-badge" aria-label="Plano mais popular">
@@ -2535,7 +2793,7 @@
           </article>
 
           <!-- Plano Corporativo -->
-          <article class="plan-card" aria-label="Plano Corporativo">
+          <article class="plan-card reveal" aria-label="Plano Corporativo">
             <span class="plan-card__name">Corporativo</span>
 
             <div class="plan-card__price-row">
@@ -2623,15 +2881,15 @@
          ========================================== -->
     <section class="faq" id="faq" aria-labelledby="faq-title">
       <div class="container">
-        <div class="faq__header">
+        <div class="faq__header reveal">
           <span class="faq__eyebrow">Tire suas dúvidas</span>
           <h2 class="faq__title" id="faq-title">Perguntas frequentes</h2>
           <p class="faq__subtitle">Tudo o que você precisa saber antes de migrar a gestão da sua empresa para o GES.</p>
         </div>
 
-        <div class="faq__list">
+        <div class="faq__list reveal-group">
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               Preciso instalar algum programa para usar o GES?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2641,7 +2899,7 @@
             </div>
           </details>
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               É difícil migrar meus dados de outro sistema?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2651,7 +2909,7 @@
             </div>
           </details>
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               Quanto tempo leva para configurar o sistema?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2661,7 +2919,7 @@
             </div>
           </details>
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               Que tipo de suporte eu tenho se precisar de ajuda?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2671,7 +2929,7 @@
             </div>
           </details>
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               Posso cancelar quando quiser?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2681,7 +2939,7 @@
             </div>
           </details>
 
-          <details class="faq-item">
+          <details class="faq-item reveal">
             <summary class="faq-item__question">
               Meus dados estão seguros na plataforma?
               <span class="faq-item__icon" aria-hidden="true"></span>
@@ -2741,15 +2999,15 @@
           <ul class="footer__links">
             <li class="footer__contact-item">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4l6 4.5L14 4M2 4v8a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1H3a1 1 0 00-1 1z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              hipplercarlo@gmail.com
+              contato@ges.com.br
             </li>
             <li class="footer__contact-item">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h2.5l1 3.5-1.75 1a8 8 0 004 4l1-1.75 3.5 1V13a1.5 1.5 0 01-1.5 1.5A11 11 0 013 4 1.5 1.5 0 013 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              (45) 99996-8711
+              0800 555 0199
             </li>
             <li class="footer__contact-item">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 8.5a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.3"/><path d="M13 6.5c0 4-5 8-5 8s-5-4-5-8a5 5 0 0110 0z" stroke="currentColor" stroke-width="1.3"/></svg>
-              Santa Helena, PR - Brasil
+              São Paulo, SP — Brasil
             </li>
           </ul>
         </div>
@@ -2787,6 +3045,66 @@
     </div>
   </footer>
 
+  <!-- ==========================================
+       MODAL — TESTAR GRÁTIS / DOWNLOAD
+       (fica na própria página; nenhuma navegação acontece)
+       ========================================== -->
+  <dialog class="trial-modal" id="trialModal" aria-labelledby="trial-modal-title">
+    <div class="trial-modal__inner">
+      <button type="button" class="trial-modal__close" data-close-modal aria-label="Fechar">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+
+      <span class="eyebrow">
+        <span class="eyebrow-dot"></span>
+        14 dias grátis · sem cartão de crédito
+      </span>
+
+      <h2 id="trial-modal-title">Seu teste do GES está a um passo</h2>
+      <p class="modal-subtitle">Escolha como prefere começar. O GES funciona direto do navegador — não é obrigatório instalar nada.</p>
+
+      <!-- Opção primária: acesso via navegador (reflete o produto real, que é SaaS) -->
+      <div class="primary-option">
+        <div class="primary-option__icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--blue-mid)" stroke-width="1.6"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" stroke="var(--blue-mid)" stroke-width="1.6"/></svg>
+        </div>
+        <div class="primary-option__body">
+          <div class="primary-option__title">Acessar pelo navegador</div>
+          <div class="primary-option__desc">Comece agora, sem instalar nada.</div>
+        </div>
+        <a href="#" class="btn btn-primary">Criar conta grátis</a>
+      </div>
+
+      <div class="modal-divider">ou baixe o aplicativo</div>
+
+      <div class="download-label">Disponível para desktop</div>
+      <div class="download-grid">
+            <!-- Botão para Windows (.exe) -->
+            <a href="downloads/GES_Setup.exe" download="GES_Setup.exe" class="download-card">
+                <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M0 3.449L9.75 2.1v9.451H0m10.95-9.6L24 0v11.4H10.95M0 12.6h9.75v9.451L0 20.7m10.95-8.1H24V24l-13.05-1.8"/>
+                </svg>
+                <span class="download-card__os">Windows</span>
+                <span class="download-card__meta">Instalador .exe</span>
+            </a>
+
+            <!-- Botão para Android (.apk) -->
+            <a href="downloads/GES_App.apk" download="GES_App.apk" class="download-card">
+                <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1522-.5676.416.416 0 00-.5676.1522l-2.0223 3.503C15.5902 8.1633 13.8535 7.76 12 7.76s-3.5902.4033-5.1367 1.1401L4.841 5.397a.416.416 0 00-.5676-.1522.416.416 0 00-.1522.5676l1.9973 3.4592C2.688 11.0863.365 14.334.01 18.24h23.98c-.355-3.906-2.678-7.1537-6.1055-8.9186"/>
+                </svg>
+                <span class="download-card__os">Android</span>
+                <span class="download-card__meta">Instalador .apk</span>
+            </a>
+        </div>
+
+      <p class="note">
+        Placeholder de demonstração — os links acima ainda não apontam para instaladores reais.
+        Veja abaixo como hospedá-los quando estiverem prontos.
+      </p>
+    </div>
+  </dialog>
+
   <script>
     // Header scroll shadow
     const header = document.getElementById('siteHeader');
@@ -2794,6 +3112,30 @@
       header.classList.toggle('scrolled', window.scrollY > 12);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Modal "Testar Grátis" — abre/fecha sem sair da página
+    const trialModal = document.getElementById('trialModal');
+
+    document.querySelectorAll('[data-open-modal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = document.getElementById(btn.dataset.openModal);
+        if (modal && typeof modal.showModal === 'function') {
+          modal.showModal();
+        }
+      });
+    });
+
+    if (trialModal) {
+      trialModal.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => trialModal.close());
+      });
+
+      // Fecha ao clicar no backdrop (fora da caixa de conteúdo)
+      trialModal.addEventListener('click', e => {
+        if (e.target === trialModal) trialModal.close();
+      });
+      // Esc já fecha <dialog> nativamente — sem necessidade de JS extra
+    }
 
     // Menu mobile (hambúrguer)
     const navToggle = document.getElementById('navToggle');
@@ -2823,6 +3165,25 @@
     const btnMonthly = document.getElementById('toggle-monthly');
     const btnYearly  = document.getElementById('toggle-yearly');
     const amounts    = document.querySelectorAll('.plan-card__amount');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Anima o valor de um preço de "from" até "to" (efeito de contagem)
+    function animateAmount(el, from, to, duration = 450) {
+      if (prefersReducedMotion || from === to) {
+        el.textContent = to;
+        return;
+      }
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cúbico
+        const current = Math.round(from + (to - from) * eased);
+        el.textContent = current;
+        if (progress < 1) requestAnimationFrame(tick);
+        else el.textContent = to;
+      }
+      requestAnimationFrame(tick);
+    }
 
     function setMode(isYearly) {
       btnMonthly.classList.toggle('active', !isYearly);
@@ -2831,7 +3192,9 @@
       btnYearly.setAttribute('aria-pressed', String(isYearly));
 
       amounts.forEach(el => {
-        el.textContent = isYearly ? el.dataset.yearly : el.dataset.monthly;
+        const from = parseInt(el.textContent, 10) || 0;
+        const to   = parseInt(isYearly ? el.dataset.yearly : el.dataset.monthly, 10);
+        animateAmount(el, from, to);
       });
     }
 
@@ -2847,7 +3210,42 @@
         }
       });
     });
+
+    // Scroll-reveal — anima seções/cards ao entrarem na viewport
+    const revealTargets = document.querySelectorAll('.reveal');
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealTargets.forEach(el => el.classList.add('is-visible'));
+    } else {
+      const revealObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      revealTargets.forEach(el => revealObserver.observe(el));
+    }
+
+    // Gráfico do dashboard — barras crescem quando o mockup entra na viewport
+    const mockupChart = document.querySelector('.mockup-chart');
+    if (mockupChart) {
+      if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        mockupChart.classList.add('in-view');
+      } else {
+        const chartObserver = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+              obs.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.3 });
+        chartObserver.observe(mockupChart);
+      }
+    }
   </script>
+
 
 </body>
 </html>
