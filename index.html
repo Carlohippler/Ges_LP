@@ -20,6 +20,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* =============================================
        DESIGN TOKENS — Paleta corporativa GES
@@ -2144,6 +2146,284 @@
       .primary-option { flex-direction: column; align-items: flex-start; text-align: left; }
       .primary-option .btn { width: 100%; justify-content: center; }
     }
+
+    /* =============================================
+       AUTH MODAL — Login / Cadastro Supabase
+       ============================================= */
+    .auth-dialog {
+      border: none; border-radius: 20px; padding: 0;
+      max-width: 440px; width: calc(100% - 2rem);
+      box-shadow: var(--shadow-xl);
+      background: var(--bg-white);
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+    }
+    .auth-dialog::backdrop { background: rgba(10,18,32,0.55); backdrop-filter: blur(4px); }
+    .auth-dialog__inner { padding: 2rem 2rem 2rem; }
+
+    .auth-dialog__logo {
+      display: flex; align-items: center; gap: .6rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-dialog__logo-mark {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(37,99,235,.35);
+    }
+    .auth-dialog__logo-mark svg { width: 18px; height: 18px; }
+    .auth-dialog__logo-name { font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; color: var(--blue-deep); letter-spacing: -.02em; }
+
+    .auth-tabs {
+      display: flex; gap: .4rem;
+      background: var(--slate-100); border-radius: 10px; padding: .3rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-tab {
+      flex: 1; text-align: center; padding: .55rem;
+      border-radius: 7px; font-size: .875rem; font-weight: 600;
+      color: var(--slate-500); cursor: pointer; transition: .15s;
+      background: transparent; border: none; font-family: var(--font-body);
+    }
+    .auth-tab.active { background: #fff; color: var(--blue-mid); box-shadow: var(--shadow-sm); }
+
+    .auth-form-group { margin-bottom: .9rem; }
+    .auth-label {
+      display: block; font-size: .8rem; font-weight: 600;
+      color: var(--slate-700); margin-bottom: .3rem;
+    }
+    .auth-input {
+      width: 100%; padding: .7rem .9rem;
+      border: 1.5px solid var(--slate-200); border-radius: 9px;
+      font-size: .9rem; font-family: var(--font-body); color: var(--slate-900);
+      background: #fff; outline: none; transition: border-color .15s;
+    }
+    .auth-input:focus { border-color: var(--blue-mid); }
+    .auth-error {
+      font-size: .8rem; color: #ef4444; margin-top: .3rem; display: none;
+    }
+    .auth-error.show { display: block; }
+    .auth-submit {
+      width: 100%; justify-content: center; padding: .8rem;
+      font-size: .95rem; margin-top: .4rem; border-radius: 9px;
+    }
+    .auth-footer-link {
+      display: block; text-align: center; margin-top: .9rem;
+      font-size: .8rem; color: var(--slate-500);
+    }
+    .auth-footer-link a { color: var(--blue-mid); font-weight: 600; }
+    .auth-dialog__close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--slate-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--slate-500); transition: background .15s;
+    }
+    .auth-dialog__close:hover { background: var(--slate-200); }
+    .auth-dialog { position: relative; }
+
+    /* =============================================
+       HEADER — estado logado
+       ============================================= */
+    .user-menu { position: relative; }
+    .user-menu__btn {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .45rem .85rem .45rem .5rem;
+      background: var(--blue-faint); border: 1.5px solid rgba(37,99,235,.15);
+      border-radius: 99px; cursor: pointer; transition: .15s;
+      font-family: var(--font-body); font-size: .875rem; font-weight: 600; color: var(--blue-deep);
+    }
+    .user-menu__btn:hover { background: rgba(37,99,235,.12); }
+    .user-menu__avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--blue-mid); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .user-menu__dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: #fff; border: 1px solid var(--slate-200);
+      border-radius: 14px; box-shadow: var(--shadow-lg);
+      min-width: 200px; overflow: hidden; z-index: 999;
+      display: none;
+    }
+    .user-menu__dropdown.open { display: block; }
+    .user-menu__info {
+      padding: .9rem 1rem .7rem;
+      border-bottom: 1px solid var(--slate-100);
+    }
+    .user-menu__name { font-weight: 700; font-size: .875rem; color: var(--slate-900); }
+    .user-menu__email { font-size: .75rem; color: var(--slate-400); margin-top: .1rem; word-break: break-all; }
+    .user-menu__item {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .7rem 1rem; font-size: .875rem; font-weight: 500;
+      color: var(--slate-700); cursor: pointer; transition: background .12s;
+      border: none; background: transparent; width: 100%; text-align: left;
+      font-family: var(--font-body);
+    }
+    .user-menu__item:hover { background: var(--slate-100); color: var(--blue-mid); }
+    .user-menu__item--danger:hover { background: #fef2f2; color: #ef4444; }
+    .user-menu__item svg { flex-shrink: 0; opacity: .7; }
+    .user-menu__sep { height: 1px; background: var(--slate-100); margin: .2rem 0; }
+
+    /* Badge de status da licença no dropdown */
+    .lic-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .7rem; font-weight: 700; padding: .15rem .55rem;
+      border-radius: 99px; margin-top: .35rem;
+    }
+    .lic-badge::before { content:''; width:6px; height:6px; border-radius:50%; background: currentColor; }
+    .lic-badge--ativa   { background: rgba(16,185,129,.1); color: #059669; }
+    .lic-badge--pendente{ background: rgba(245,158,11,.1);  color: #b45309; }
+    .lic-badge--none    { background: var(--slate-100);     color: var(--slate-500); }
+
+    /* =============================================
+       PORTAL DRAWER — slide-in lateral
+       ============================================= */
+    .portal-drawer {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: stretch; pointer-events: none;
+    }
+    .portal-drawer.open { pointer-events: all; }
+    .portal-drawer__backdrop {
+      position: absolute; inset: 0;
+      background: rgba(10,18,32,.5); backdrop-filter: blur(4px);
+      opacity: 0; transition: opacity .3s ease;
+    }
+    .portal-drawer.open .portal-drawer__backdrop { opacity: 1; }
+
+    .portal-drawer__panel {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 520px; max-width: 100vw;
+      background: var(--bg-page); display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .32s cubic-bezier(.22,1,.36,1);
+      box-shadow: -8px 0 40px rgba(10,18,32,.18);
+    }
+    .portal-drawer.open .portal-drawer__panel { transform: translateX(0); }
+
+    .portal-drawer__header {
+      height: 60px; display: flex; align-items: center;
+      padding: 0 1.25rem; gap: .75rem;
+      background: #fff; border-bottom: 1px solid var(--slate-200);
+      flex-shrink: 0;
+    }
+    .portal-drawer__title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--blue-deep); flex: 1; }
+    .portal-drawer__close {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--slate-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--slate-500); transition: background .15s;
+    }
+    .portal-drawer__close:hover { background: var(--slate-200); }
+
+    .portal-drawer__tabs {
+      display: flex; background: #fff; border-bottom: 1px solid var(--slate-200);
+      padding: 0 1rem; gap: 0; flex-shrink: 0; overflow-x: auto;
+    }
+    .portal-drawer__tab {
+      padding: .75rem .9rem; font-size: .82rem; font-weight: 600;
+      color: var(--slate-500); cursor: pointer; border: none;
+      background: transparent; font-family: var(--font-body);
+      border-bottom: 2.5px solid transparent; white-space: nowrap;
+      transition: color .15s, border-color .15s;
+    }
+    .portal-drawer__tab.active { color: var(--blue-mid); border-bottom-color: var(--blue-mid); }
+
+    .portal-drawer__body { flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem; }
+    .portal-page { display: none; }
+    .portal-page.active { display: block; }
+
+    /* Cards dentro do portal */
+    .p-card {
+      background: #fff; border: 1px solid var(--slate-200);
+      border-radius: 14px; padding: 1.25rem; box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+    }
+    .p-card__title { font-family: var(--font-display); font-weight: 700; font-size: .9rem; color: var(--slate-900); margin-bottom: .9rem; }
+    .p-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; margin-bottom: 1rem; }
+    .p-stat { background: #fff; border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem; }
+    .p-stat__label { font-size: .7rem; font-weight: 600; color: var(--slate-500); text-transform: uppercase; letter-spacing: .04em; }
+    .p-stat__value { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--slate-900); margin-top: .15rem; }
+    .p-stat__sub { font-size: .72rem; color: var(--slate-400); margin-top: .1rem; }
+
+    .key-box {
+      display: flex; align-items: center; gap: .6rem;
+      background: var(--slate-100); border: 1.5px dashed var(--slate-200);
+      border-radius: 9px; padding: .65rem .9rem;
+    }
+    .key-text { font-family: monospace; font-size: .85rem; color: var(--slate-900); flex: 1; word-break: break-all; }
+    .copy-btn {
+      background: transparent; border: 1.5px solid var(--slate-200); border-radius: 7px;
+      padding: .35rem .65rem; font-size: .75rem; font-weight: 600; color: var(--slate-500);
+      flex-shrink: 0; cursor: pointer; transition: .15s; font-family: var(--font-body);
+    }
+    .copy-btn:hover { border-color: var(--blue-mid); color: var(--blue-mid); }
+
+    .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .75rem; }
+    .dl-card {
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+      padding: 1.25rem .75rem; border: 1.5px solid var(--slate-200);
+      border-radius: 12px; background: #fff; transition: .18s; text-align: center; cursor: pointer;
+    }
+    .dl-card:hover { border-color: var(--blue-mid); box-shadow: var(--shadow-md); }
+    .dl-card__icon { font-size: 1.6rem; }
+    .dl-card__name { font-weight: 700; font-size: .85rem; color: var(--slate-900); }
+    .dl-card__meta { font-size: .72rem; color: var(--slate-500); }
+
+    .p-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .p-table th { text-align: left; padding: .5rem .6rem; font-size: .7rem; font-weight: 600; color: var(--slate-500); text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--slate-200); }
+    .p-table td { padding: .65rem .6rem; border-bottom: 1px solid var(--slate-100); color: var(--slate-700); }
+    .p-table tr:last-child td { border-bottom: none; }
+
+    .p-badge { display: inline-flex; align-items: center; gap: .3rem; font-size: .7rem; font-weight: 700; padding: .18rem .55rem; border-radius: 99px; }
+    .p-badge::before { content:''; width:5px; height:5px; border-radius:50%; background: currentColor; }
+    .p-badge--green  { background: rgba(16,185,129,.1); color: #059669; }
+    .p-badge--amber  { background: rgba(245,158,11,.1);  color: #b45309; }
+    .p-badge--red    { background: rgba(239,68,68,.1);   color: #dc2626; }
+    .p-badge--slate  { background: var(--slate-100);     color: var(--slate-500); }
+
+    .p-form-group { margin-bottom: .85rem; }
+    .p-label { display: block; font-size: .8rem; font-weight: 600; color: var(--slate-700); margin-bottom: .3rem; }
+    .p-input, .p-textarea, .p-select {
+      width: 100%; padding: .65rem .85rem;
+      border: 1.5px solid var(--slate-200); border-radius: 9px;
+      font-size: .875rem; font-family: var(--font-body); color: var(--slate-900);
+      background: #fff; outline: none; transition: border-color .15s;
+    }
+    .p-input:focus, .p-textarea:focus, .p-select:focus { border-color: var(--blue-mid); }
+    .p-textarea { resize: vertical; min-height: 90px; }
+
+    .plan-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+    .plan-card-p { border: 2px solid var(--slate-200); border-radius: 14px; padding: 1.1rem; background: #fff; transition: .18s; }
+    .plan-card-p.current { border-color: var(--blue-mid); background: var(--blue-faint); }
+    .plan-card-p:hover:not(.current) { border-color: var(--blue-light); }
+    .plan-card-p__name { font-family: var(--font-display); font-weight: 700; font-size: .9rem; color: var(--slate-900); margin-bottom: .25rem; }
+    .plan-card-p__price { font-size: 1.3rem; font-weight: 700; color: var(--blue-mid); }
+    .plan-card-p__price small { font-size: .75rem; font-weight: 400; color: var(--slate-500); }
+    .plan-card-p__desc { font-size: .75rem; color: var(--slate-500); margin: .35rem 0 .85rem; }
+
+    /* Toast global */
+    .g-toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 2000;
+      background: var(--slate-900); color: #fff;
+      padding: .7rem 1.1rem; border-radius: 10px;
+      font-size: .85rem; font-weight: 500;
+      transform: translateY(70px); opacity: 0; transition: .28s ease;
+      pointer-events: none; max-width: 280px;
+    }
+    .g-toast.show { transform: translateY(0); opacity: 1; }
+    .g-toast.success { background: #059669; }
+    .g-toast.error   { background: #dc2626; }
+
+    @media (max-width: 600px) {
+      .portal-drawer__panel { width: 100vw; }
+      .p-stat-grid { grid-template-columns: 1fr 1fr; }
+      .plan-cards { grid-template-columns: 1fr; }
+      .dl-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -2181,7 +2461,47 @@
 
         <!-- Ações do header -->
         <div class="header__actions">
-          <a href="#entrar" class="btn btn-ghost" aria-label="Acessar sua conta">Entrar</a>
+
+          <!-- Estado: deslogado -->
+          <div id="headerGuest">
+            <button type="button" id="btnOpenAuth" class="btn btn-ghost" aria-label="Entrar na sua conta">Entrar</button>
+          </div>
+
+          <!-- Estado: logado (oculto até autenticar) -->
+          <div id="headerUser" style="display:none">
+            <div class="user-menu" id="userMenu">
+              <button class="user-menu__btn" id="userMenuBtn" aria-label="Menu do usuário" aria-expanded="false">
+                <div class="user-menu__avatar" id="userAvatar">?</div>
+                <span id="userMenuName">Usuário</span>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="user-menu__dropdown" id="userDropdown">
+                <div class="user-menu__info">
+                  <div class="user-menu__name" id="dropName">—</div>
+                  <div class="user-menu__email" id="dropEmail">—</div>
+                  <div id="dropLicBadge"></div>
+                </div>
+                <button class="user-menu__item" onclick="openPortal('dashboard')">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                  Meu painel
+                </button>
+                <button class="user-menu__item" onclick="openPortal('licenca')">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 5V4a4 4 0 018 0v1" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="11" r="1.5" fill="currentColor"/></svg>
+                  Minha licença
+                </button>
+                <button class="user-menu__item" onclick="openPortal('downloads')">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 3v10m0 0l-3-3m3 3l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Downloads
+                </button>
+                <div class="user-menu__sep"></div>
+                <button class="user-menu__item user-menu__item--danger" onclick="doLogout()">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M13 15l4-4-4-4M17 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 17H4a1 1 0 01-1-1V4a1 1 0 011-1h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Sair
+                </button>
+              </div>
+            </div>
+          </div>
+
           <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 3.9L8 10.1 4.4 11.9l.7-3.9L2.2 5.2l4-.6z" fill="currentColor"/>
@@ -2228,7 +2548,7 @@
 
             <span class="hero__eyebrow" aria-label="Status do sistema">
               <span class="hero__eyebrow-dot" aria-hidden="true"></span>
-              Plataforma disponível — GES Desktop
+              Plataforma disponível — sem instalação
             </span>
 
             <h1 class="hero__title" id="hero-title">
@@ -2317,7 +2637,7 @@
                 <!-- Conteúdo principal do mockup -->
                 <div class="mockup-content">
                   <div class="mockup-content__greeting">
-                    Bom dia, Ana! <span>— Visão geral de hoje</span>
+                    Bom dia, Marcos! <span>— Visão geral de hoje</span>
                   </div>
 
                   <!-- KPI cards -->
@@ -2343,7 +2663,7 @@
                   <div class="mockup-chart">
                     <div class="mockup-chart__header">
                       <span class="mockup-chart__title">Vendas por mês</span>
-                      <span class="mockup-chart__period">2026</span>
+                      <span class="mockup-chart__period">2025</span>
                     </div>
                     <div class="mockup-bars">
                       <div class="mockup-bar" style="height: 42%"></div>
@@ -2403,7 +2723,7 @@
           </div>
           <div class="stat-divider" aria-hidden="true"></div>
           <div class="stat-item">
-            <span class="stat-item__number">R$ 2,1Bi</span>
+            <span class="stat-item__number">R$ 2,1bi</span>
             <span class="stat-item__label">Processados em vendas</span>
           </div>
           <div class="stat-divider" aria-hidden="true"></div>
@@ -3049,6 +3369,192 @@
        MODAL — TESTAR GRÁTIS / DOWNLOAD
        (fica na própria página; nenhuma navegação acontece)
        ========================================== -->
+  <!-- ==========================================
+       MODAL DE LOGIN / CADASTRO
+       ========================================== -->
+  <dialog class="auth-dialog" id="authDialog" aria-labelledby="authDialogTitle">
+    <div class="auth-dialog__inner">
+      <button class="auth-dialog__close" id="authDialogClose" aria-label="Fechar">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+
+      <div class="auth-dialog__logo">
+        <div class="auth-dialog__logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity=".9"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity=".5"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity=".5"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity=".75"/></svg>
+        </div>
+        <span class="auth-dialog__logo-name">GES</span>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin"  onclick="authSwitchTab('login')">Entrar</button>
+        <button class="auth-tab"        id="tabSignup" onclick="authSwitchTab('signup')">Criar conta</button>
+      </div>
+
+      <!-- Formulário: Login -->
+      <div id="formLogin">
+        <div class="auth-form-group">
+          <label class="auth-label" for="loginEmail">E-mail</label>
+          <input class="auth-input" type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email" />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="loginPass">Senha</label>
+          <input class="auth-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="auth-error" id="loginError"></div>
+        <button class="btn btn-primary auth-submit" id="loginBtn" onclick="doLogin()">Entrar</button>
+        <span class="auth-footer-link"><a href="#" onclick="doForgotPassword(event)">Esqueci minha senha</a></span>
+      </div>
+
+      <!-- Formulário: Cadastro -->
+      <div id="formSignup" style="display:none">
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupNome">Nome completo</label>
+          <input class="auth-input" type="text" id="signupNome" placeholder="João Silva" autocomplete="name" />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupEmpresa">Empresa (opcional)</label>
+          <input class="auth-input" type="text" id="signupEmpresa" placeholder="Minha Empresa Ltda." />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupEmail">E-mail</label>
+          <input class="auth-input" type="email" id="signupEmail" placeholder="seu@email.com" autocomplete="email" />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupPass">Senha</label>
+          <input class="auth-input" type="password" id="signupPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+        </div>
+        <div class="auth-error" id="signupError"></div>
+        <button class="btn btn-primary auth-submit" id="signupBtn" onclick="doSignup()">Criar conta grátis</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ==========================================
+       PORTAL DRAWER (slide-in lateral)
+       ========================================== -->
+  <div class="portal-drawer" id="portalDrawer" role="dialog" aria-modal="true" aria-label="Portal do cliente">
+    <div class="portal-drawer__backdrop" id="drawerBackdrop"></div>
+    <div class="portal-drawer__panel">
+
+      <div class="portal-drawer__header">
+        <div class="portal-drawer__title">Portal do cliente</div>
+        <button class="portal-drawer__close" id="drawerClose" aria-label="Fechar portal">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="portal-drawer__tabs">
+        <button class="portal-drawer__tab active" data-ptab="dashboard" onclick="switchPortalTab('dashboard')">Início</button>
+        <button class="portal-drawer__tab" data-ptab="licenca"   onclick="switchPortalTab('licenca')">Licença</button>
+        <button class="portal-drawer__tab" data-ptab="downloads" onclick="switchPortalTab('downloads')">Downloads</button>
+        <button class="portal-drawer__tab" data-ptab="pagamentos" onclick="switchPortalTab('pagamentos')">Pagamentos</button>
+        <button class="portal-drawer__tab" data-ptab="suporte"   onclick="switchPortalTab('suporte')">Suporte</button>
+        <button class="portal-drawer__tab" data-ptab="planos"    onclick="switchPortalTab('planos')">Planos</button>
+      </div>
+
+      <div class="portal-drawer__body">
+
+        <!-- DASHBOARD -->
+        <div class="portal-page active" id="ppage-dashboard">
+          <div class="p-stat-grid">
+            <div class="p-stat">
+              <div class="p-stat__label">Licença</div>
+              <div class="p-stat__value" id="pStat1">—</div>
+              <div class="p-stat__sub"  id="pStat1sub">—</div>
+            </div>
+            <div class="p-stat">
+              <div class="p-stat__label">Plano</div>
+              <div class="p-stat__value" id="pStat2">—</div>
+              <div class="p-stat__sub"  id="pStat2sub">—</div>
+            </div>
+            <div class="p-stat">
+              <div class="p-stat__label">Versão</div>
+              <div class="p-stat__value" id="pStat3">—</div>
+              <div class="p-stat__sub">GES Desktop</div>
+            </div>
+          </div>
+          <div class="p-card">
+            <div class="p-card__title">Downloads rápidos</div>
+            <div id="pQuickDownloads" style="font-size:.85rem;color:var(--slate-500)">Carregando...</div>
+          </div>
+        </div>
+
+        <!-- LICENÇA -->
+        <div class="portal-page" id="ppage-licenca">
+          <div class="p-card" id="pLicCard">
+            <p style="font-size:.875rem;color:var(--slate-500)">Carregando...</p>
+          </div>
+        </div>
+
+        <!-- DOWNLOADS -->
+        <div class="portal-page" id="ppage-downloads">
+          <div class="p-card">
+            <div class="p-card__title">Versão mais recente</div>
+            <div class="dl-grid" id="pDlGrid"><p style="color:var(--slate-500);font-size:.85rem">Carregando...</p></div>
+          </div>
+          <div class="p-card">
+            <div class="p-card__title">Histórico</div>
+            <div id="pVersoesLista" style="font-size:.85rem;color:var(--slate-500)">Carregando...</div>
+          </div>
+        </div>
+
+        <!-- PAGAMENTOS -->
+        <div class="portal-page" id="ppage-pagamentos">
+          <div id="pPayBar" style="margin-bottom:.9rem;display:none">
+            <button class="btn btn-primary" onclick="alert('Integre com o backend Asaas para gerar cobranças.')">💳 Pagar licença</button>
+          </div>
+          <div class="p-card">
+            <div class="p-card__title">Histórico de cobranças</div>
+            <div style="overflow-x:auto">
+              <table class="p-table">
+                <thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Status</th></tr></thead>
+                <tbody id="pPagTbody"><tr><td colspan="4" style="color:var(--slate-500)">Carregando...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUPORTE -->
+        <div class="portal-page" id="ppage-suporte">
+          <div class="p-card" style="margin-bottom:.9rem">
+            <div class="p-card__title">Abrir chamado</div>
+            <div class="p-form-group">
+              <label class="p-label" for="tktAssunto">Assunto</label>
+              <input class="p-input" type="text" id="tktAssunto" placeholder="Descreva brevemente o problema" />
+            </div>
+            <div class="p-form-group">
+              <label class="p-label" for="tktMsg">Mensagem</label>
+              <textarea class="p-textarea" id="tktMsg" placeholder="Detalhe o que está acontecendo..."></textarea>
+            </div>
+            <div class="p-form-group">
+              <label class="p-label" for="tktPrio">Prioridade</label>
+              <select class="p-select" id="tktPrio">
+                <option value="normal">Normal</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
+                <option value="baixa">Baixa</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="enviarTicket()">Enviar chamado</button>
+          </div>
+          <div class="p-card">
+            <div class="p-card__title">Meus chamados</div>
+            <div id="pTicketsLista" style="font-size:.85rem;color:var(--slate-500)">Nenhum chamado aberto.</div>
+          </div>
+        </div>
+
+        <!-- PLANOS -->
+        <div class="portal-page" id="ppage-planos">
+          <div class="plan-cards" id="pPlanCards"><p style="color:var(--slate-500)">Carregando planos...</p></div>
+        </div>
+
+      </div><!-- /body -->
+    </div><!-- /panel -->
+  </div><!-- /drawer -->
+
+  <!-- Toast global -->
+  <div class="g-toast" id="gToast"></div>
+
   <dialog class="trial-modal" id="trialModal" aria-labelledby="trial-modal-title">
     <div class="trial-modal__inner">
       <button type="button" class="trial-modal__close" data-close-modal aria-label="Fechar">
@@ -3103,6 +3609,373 @@
       </p>
     </div>
   </dialog>
+
+  <script>
+    /* ================================================
+       ⚙️  CONFIGURAÇÃO — substitua pelos seus dados
+       ================================================ */
+    const SUPABASE_URL  = 'https://iazrkpfpnubkrwhncsog.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_W98PckoJNh5FSajWjvcAmw_nTvtOWTn';
+    const BACKEND_URL   = 'https://SUA_URL.up.railway.app';
+    /* ------------------------------------------------
+       INICIALIZAÇÃO DO SUPABASE
+    ------------------------------------------------ */
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    /* ------------------------------------------------
+       ESTADO GLOBAL
+    ------------------------------------------------ */
+    let _user     = null;
+    let _cliente  = null;
+    let _licenca  = null;
+    let _plano    = null;
+
+    /* ------------------------------------------------
+       BOOTSTRAP — verifica sessão ao carregar
+    ------------------------------------------------ */
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) { _user = session.user; await onLogin(); }
+
+      sb.auth.onAuthStateChange(async (evt, sess) => {
+        if (evt === 'SIGNED_IN')  { _user = sess.user; await onLogin(); }
+        if (evt === 'SIGNED_OUT') onLogout();
+      });
+    })();
+
+    /* ------------------------------------------------
+       APÓS LOGIN — carrega dados e atualiza UI
+    ------------------------------------------------ */
+    async function onLogin() {
+      // Perfil do cliente
+      const { data: c } = await sb.from('clientes').select('*').eq('id', _user.id).single();
+      _cliente = c;
+
+      // Licença + plano
+      const { data: l } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).single();
+      _licenca = l;
+      _plano   = l?.planos;
+
+      updateHeaderUI();
+      if (document.getElementById('authDialog').open) document.getElementById('authDialog').close();
+    }
+
+    /* ------------------------------------------------
+       ATUALIZA HEADER
+    ------------------------------------------------ */
+    function updateHeaderUI() {
+      const nome  = _cliente?.nome || _user?.email?.split('@')[0] || 'Usuário';
+      const email = _user?.email || '';
+      const ini   = nome.charAt(0).toUpperCase();
+
+      document.getElementById('headerGuest').style.display = 'none';
+      document.getElementById('headerUser').style.display  = 'block';
+      document.getElementById('userAvatar').textContent    = ini;
+      document.getElementById('userMenuName').textContent  = nome.split(' ')[0];
+      document.getElementById('dropName').textContent      = nome;
+      document.getElementById('dropEmail').textContent     = email;
+
+      // Badge de licença
+      const badge = document.getElementById('dropLicBadge');
+      if (_licenca?.status === 'ativa') {
+        badge.innerHTML = `<span class="lic-badge lic-badge--ativa">Licença ativa</span>`;
+      } else if (_licenca) {
+        badge.innerHTML = `<span class="lic-badge lic-badge--pendente">Pagamento pendente</span>`;
+      } else {
+        badge.innerHTML = `<span class="lic-badge lic-badge--none">Sem licença</span>`;
+      }
+    }
+
+    /* ------------------------------------------------
+       LOGOUT
+    ------------------------------------------------ */
+    async function doLogout() {
+      closeDropdown();
+      await sb.auth.signOut();
+    }
+    function onLogout() {
+      _user = _cliente = _licenca = _plano = null;
+      document.getElementById('headerGuest').style.display = 'block';
+      document.getElementById('headerUser').style.display  = 'none';
+      closePortal();
+    }
+
+    /* ------------------------------------------------
+       DROPDOWN DO USUÁRIO
+    ------------------------------------------------ */
+    const userMenuBtn  = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    function closeDropdown() {
+      userDropdown.classList.remove('open');
+      userMenuBtn.setAttribute('aria-expanded','false');
+    }
+    if (userMenuBtn) {
+      userMenuBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = userDropdown.classList.toggle('open');
+        userMenuBtn.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+    document.addEventListener('click', e => {
+      if (!document.getElementById('userMenu')?.contains(e.target)) closeDropdown();
+    });
+
+    /* ================================================
+       AUTH MODAL
+    ================================================ */
+    const authDialog = document.getElementById('authDialog');
+
+    document.getElementById('btnOpenAuth')?.addEventListener('click', () => {
+      if (authDialog.showModal) authDialog.showModal();
+    });
+    document.getElementById('authDialogClose')?.addEventListener('click', () => authDialog.close());
+    authDialog?.addEventListener('click', e => { if (e.target === authDialog) authDialog.close(); });
+
+    function authSwitchTab(tab) {
+      document.getElementById('formLogin').style.display  = tab === 'login'  ? 'block' : 'none';
+      document.getElementById('formSignup').style.display = tab === 'signup' ? 'block' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active',  tab === 'login');
+      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPass').value;
+      const btn   = document.getElementById('loginBtn');
+      const err   = document.getElementById('loginError');
+      err.classList.remove('show');
+      btn.disabled = true; btn.textContent = 'Entrando...';
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      btn.disabled = false; btn.textContent = 'Entrar';
+      if (error) { err.textContent = traduzirErro(error.message); err.classList.add('show'); }
+    }
+
+    async function doSignup() {
+      const nome    = document.getElementById('signupNome').value.trim();
+      const empresa = document.getElementById('signupEmpresa').value.trim();
+      const email   = document.getElementById('signupEmail').value.trim();
+      const pass    = document.getElementById('signupPass').value;
+      const btn     = document.getElementById('signupBtn');
+      const err     = document.getElementById('signupError');
+      err.classList.remove('show');
+      if (!nome) { err.textContent = 'Informe seu nome.'; err.classList.add('show'); return; }
+      btn.disabled = true; btn.textContent = 'Criando conta...';
+      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { nome, empresa } } });
+      if (error) { btn.disabled = false; btn.textContent = 'Criar conta grátis'; err.textContent = traduzirErro(error.message); err.classList.add('show'); return; }
+      if (data.user) await sb.from('clientes').upsert({ id: data.user.id, nome, empresa });
+      btn.disabled = false; btn.textContent = 'Criar conta grátis';
+      toast('Conta criada! Verifique seu e-mail para confirmar.', 'success', 5000);
+    }
+
+    async function doForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim() || prompt('Digite seu e-mail:');
+      if (!email) return;
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+      toast(error ? 'Erro: ' + error.message : 'Link de redefinição enviado para seu e-mail!', error ? 'error' : 'success');
+    }
+
+    function traduzirErro(msg) {
+      const m = { 'Invalid login credentials':'E-mail ou senha incorretos.', 'Email not confirmed':'Confirme seu e-mail antes de entrar.', 'User already registered':'Este e-mail já está cadastrado.', 'Password should be at least 6 characters':'A senha deve ter pelo menos 6 caracteres.' };
+      return m[msg] || msg;
+    }
+
+    /* ================================================
+       PORTAL DRAWER
+    ================================================ */
+    const portalDrawer = document.getElementById('portalDrawer');
+
+    function openPortal(tab) {
+      closeDropdown();
+      portalDrawer.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      switchPortalTab(tab || 'dashboard');
+      loadPortalTab(tab || 'dashboard');
+    }
+    function closePortal() {
+      portalDrawer.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('drawerClose')?.addEventListener('click', closePortal);
+    document.getElementById('drawerBackdrop')?.addEventListener('click', closePortal);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && portalDrawer.classList.contains('open')) closePortal(); });
+
+    function switchPortalTab(name) {
+      document.querySelectorAll('.portal-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.portal-drawer__tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('ppage-' + name)?.classList.add('active');
+      document.querySelector(`[data-ptab="${name}"]`)?.classList.add('active');
+      loadPortalTab(name);
+    }
+
+    const _loaded = {};
+    function loadPortalTab(name) {
+      if (_loaded[name]) return;
+      _loaded[name] = true;
+      if (name === 'dashboard')  loadDashboard();
+      if (name === 'licenca')    loadLicenca();
+      if (name === 'downloads')  loadDownloads();
+      if (name === 'pagamentos') loadPagamentos();
+      if (name === 'suporte')    loadTickets();
+      if (name === 'planos')     loadPlanos();
+    }
+
+    /* -- DASHBOARD -- */
+    async function loadDashboard() {
+      const s1 = document.getElementById('pStat1');
+      s1.textContent = _licenca?.status ? cap(_licenca.status) : '—';
+      s1.style.color = _licenca?.status === 'ativa' ? '#059669' : 'var(--slate-900)';
+      document.getElementById('pStat1sub').textContent = _licenca?.expiracao ? 'Expira ' + fmtDate(_licenca.expiracao) : '—';
+      document.getElementById('pStat2').textContent = _plano?.nome || '—';
+      document.getElementById('pStat2sub').textContent = _licenca ? cap(_licenca.periodicidade) : '—';
+
+      const { data: v } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false }).limit(1).single();
+      document.getElementById('pStat3').textContent = v ? 'v' + v.versao : '—';
+
+      const qd = document.getElementById('pQuickDownloads');
+      if (v && (_licenca?.status === 'ativa')) {
+        qd.innerHTML = `<div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          ${v.url_windows ? `<a href="${v.url_windows}" download class="btn btn-primary" style="font-size:.8rem;padding:.55rem 1rem">⬇ Windows .exe</a>` : ''}
+          ${v.url_android ? `<a href="${v.url_android}" download class="btn btn-ghost" style="font-size:.8rem;padding:.55rem 1rem">⬇ Android .apk</a>` : ''}
+        </div><p style="margin-top:.6rem;font-size:.75rem;color:var(--slate-400)">${v.descricao || ''}</p>`;
+      } else if (!_licenca || _licenca.status !== 'ativa') {
+        qd.innerHTML = `<p style="color:var(--slate-500);font-size:.85rem">⚠️ Você precisa de uma licença ativa para baixar o software.</p>`;
+      } else {
+        qd.textContent = 'Nenhuma versão disponível no momento.';
+      }
+    }
+
+    /* -- LICENÇA -- */
+    function loadLicenca() {
+      const el = document.getElementById('pLicCard');
+      if (!_licenca) {
+        el.innerHTML = `<p style="color:var(--slate-500);font-size:.875rem">Você ainda não possui uma licença.</p><button class="btn btn-primary" style="margin-top:.75rem" onclick="switchPortalTab('planos')">Ver planos</button>`;
+        return;
+      }
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.1rem">
+          <div><div class="p-card__title" style="margin-bottom:.2rem">Licença ${_plano?.nome || ''}</div>${pBadge(_licenca.status)}</div>
+        </div>
+        <div class="p-form-group"><label class="p-label">Chave de ativação</label>
+          <div class="key-box"><span class="key-text" id="pLicKey">${_licenca.chave}</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pLicKey').textContent).then(()=>toast('Chave copiada!','success'))">Copiar</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem">
+          <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">INÍCIO</div><div style="font-weight:600;font-size:.875rem">${_licenca.inicio ? fmtDate(_licenca.inicio) : '—'}</div></div>
+          <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">EXPIRAÇÃO</div><div style="font-weight:600;font-size:.875rem">${_licenca.expiracao ? fmtDate(_licenca.expiracao) : '—'}</div></div>
+          <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">PERIODICIDADE</div><div style="font-weight:600;font-size:.875rem">${cap(_licenca.periodicidade)}</div></div>
+          <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">MAX. USUÁRIOS</div><div style="font-weight:600;font-size:.875rem">${_plano?.max_usuarios || '—'}</div></div>
+        </div>
+        ${_licenca.status === 'pendente' ? `<div style="margin-top:1rem"><button class="btn btn-primary" onclick="alert('Configure o backend Asaas para processar pagamentos.')">💳 Pagar licença</button></div>` : ''}
+      `;
+    }
+
+    /* -- DOWNLOADS -- */
+    async function loadDownloads() {
+      if (!_licenca || _licenca.status !== 'ativa') {
+        document.getElementById('pDlGrid').innerHTML = `<p style="color:#dc2626;font-size:.85rem;grid-column:1/-1">⚠️ Licença ativa necessária para download.<br><button class="btn btn-primary" style="margin-top:.6rem;font-size:.8rem;padding:.5rem 1rem" onclick="switchPortalTab('planos')">Ver planos</button></p>`;
+        document.getElementById('pVersoesLista').textContent = '—';
+        return;
+      }
+      const { data } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false });
+      if (!data?.length) { document.getElementById('pDlGrid').textContent = 'Nenhuma versão disponível.'; return; }
+      const v = data[0];
+      document.getElementById('pDlGrid').innerHTML = `
+        ${v.url_windows ? `<a href="${v.url_windows}" download class="dl-card"><span class="dl-card__icon">🪟</span><span class="dl-card__name">Windows</span><span class="dl-card__meta">.exe · v${v.versao}</span></a>` : ''}
+        ${v.url_android ? `<a href="${v.url_android}" download class="dl-card"><span class="dl-card__icon">🤖</span><span class="dl-card__name">Android</span><span class="dl-card__meta">.apk · v${v.versao}</span></a>` : ''}
+      `;
+      document.getElementById('pVersoesLista').innerHTML = data.map(x => `
+        <div style="padding:.55rem 0;border-bottom:1px solid var(--slate-100)"><strong>v${x.versao}</strong> <span style="color:var(--slate-400);font-size:.75rem">${x.publicada_em ? fmtDate(x.publicada_em) : ''}</span>
+        <p style="color:var(--slate-500);font-size:.78rem;margin-top:.15rem">${x.descricao || 'Sem notas de versão.'}</p></div>
+      `).join('');
+    }
+
+    /* -- PAGAMENTOS -- */
+    async function loadPagamentos() {
+      document.getElementById('pPayBar').style.display = _licenca?.status === 'pendente' ? 'block' : 'none';
+      if (!_licenca) { document.getElementById('pPagTbody').innerHTML = '<tr><td colspan="4" style="color:var(--slate-500)">Nenhum pagamento.</td></tr>'; return; }
+      const { data } = await sb.from('pagamentos').select('*').eq('licenca_id', _licenca.id).order('criado_em', { ascending: false });
+      const tb = document.getElementById('pPagTbody');
+      if (!data?.length) { tb.innerHTML = '<tr><td colspan="4" style="color:var(--slate-500)">Nenhum pagamento ainda.</td></tr>'; return; }
+      const lbls = { RECEIVED:'Recebido', CONFIRMED:'Confirmado', PENDING:'Pendente', OVERDUE:'Vencido', REFUNDED:'Estornado', CANCELLED:'Cancelado' };
+      const cls  = { RECEIVED:'green', CONFIRMED:'green', PENDING:'amber', OVERDUE:'red', REFUNDED:'slate', CANCELLED:'red' };
+      tb.innerHTML = data.map(p => `<tr>
+        <td>${fmtDate(p.criado_em)}</td>
+        <td>R$ ${Number(p.valor).toFixed(2).replace('.',',')}</td>
+        <td>${p.forma || '—'}</td>
+        <td><span class="p-badge p-badge--${cls[p.status]||'slate'}">${lbls[p.status]||p.status}</span></td>
+      </tr>`).join('');
+    }
+
+    /* -- SUPORTE -- */
+    async function enviarTicket() {
+      const assunto = document.getElementById('tktAssunto').value.trim();
+      const msg     = document.getElementById('tktMsg').value.trim();
+      const prio    = document.getElementById('tktPrio').value;
+      if (!assunto || !msg) { toast('Preencha todos os campos.', 'error'); return; }
+      const { error } = await sb.from('tickets').insert({ cliente_id: _user.id, assunto, mensagem: msg, prioridade: prio });
+      if (error) { toast('Erro: ' + error.message, 'error'); return; }
+      document.getElementById('tktAssunto').value = '';
+      document.getElementById('tktMsg').value = '';
+      toast('Chamado enviado!', 'success');
+      _loaded.suporte = false; loadTickets();
+    }
+    async function loadTickets() {
+      const { data } = await sb.from('tickets').select('*').eq('cliente_id', _user.id).order('criado_em', { ascending: false });
+      const el = document.getElementById('pTicketsLista');
+      if (!data?.length) { el.textContent = 'Nenhum chamado aberto.'; return; }
+      const scls  = { aberto:'amber', em_atendimento:'green', resolvido:'slate', fechado:'slate' };
+      const slbls = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', fechado:'Fechado' };
+      el.innerHTML = data.map(t => `
+        <div style="padding:.8rem 0;border-bottom:1px solid var(--slate-100)">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.25rem">
+            <strong style="font-size:.875rem;color:var(--slate-900);flex:1">${t.assunto}</strong>
+            <span class="p-badge p-badge--${scls[t.status]||'slate'}">${slbls[t.status]||t.status}</span>
+          </div>
+          <p style="font-size:.8rem;color:var(--slate-500)">${t.mensagem}</p>
+          <div style="font-size:.72rem;color:var(--slate-400);margin-top:.25rem">${fmtDate(t.criado_em)}</div>
+        </div>
+      `).join('');
+    }
+
+    /* -- PLANOS -- */
+    async function loadPlanos() {
+      const { data } = await sb.from('planos').select('*').eq('ativo', true).order('preco_mensal');
+      const el = document.getElementById('pPlanCards');
+      if (!data?.length) { el.textContent = 'Nenhum plano disponível.'; return; }
+      el.innerHTML = data.map(p => {
+        const cur = _plano?.id === p.id;
+        return `<div class="plan-card-p ${cur?'current':''}">
+          ${cur ? '<span class="p-badge p-badge--green" style="margin-bottom:.5rem;display:inline-flex">Plano atual</span>' : ''}
+          <div class="plan-card-p__name">${p.nome}</div>
+          <div class="plan-card-p__price">R$ ${Number(p.preco_mensal).toFixed(0)}<small>/mês</small></div>
+          <div class="plan-card-p__desc">${p.descricao || ''}</div>
+          ${!cur ? `<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:.8rem;padding:.6rem" onclick="alert('Configure o backend Asaas para processar assinaturas.')">Assinar</button>` : '<span style="font-size:.78rem;color:#059669">✔ Plano atual</span>'}
+        </div>`;
+      }).join('');
+    }
+
+    /* ================================================
+       HELPERS
+    ================================================ */
+    function toast(msg, type = '', dur = 3000) {
+      const t = document.getElementById('gToast');
+      t.textContent = msg; t.className = 'g-toast show ' + type;
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), dur);
+    }
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
+    function cap(s)     { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '—'; }
+    function pBadge(status) {
+      const m = { ativa:'green', pendente:'amber', suspensa:'amber', cancelada:'red', expirada:'red' };
+      return `<span class="p-badge p-badge--${m[status]||'slate'}">${cap(status)}</span>`;
+    }
+
+    /* Enter nos campos de auth */
+    document.getElementById('loginPass')?.addEventListener('keydown',   e => e.key==='Enter' && doLogin());
+    document.getElementById('signupPass')?.addEventListener('keydown',  e => e.key==='Enter' && doSignup());
+  </script>
 
   <script>
     // Header scroll shadow
