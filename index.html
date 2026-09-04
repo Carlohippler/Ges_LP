@@ -2424,6 +2424,46 @@
       .plan-cards { grid-template-columns: 1fr; }
       .dl-grid { grid-template-columns: 1fr; }
     }
+
+    /* =============================================
+       MODAL DE PAGAMENTO
+       ============================================= */
+    .pay-dialog {
+      border: none; border-radius: 20px; padding: 0;
+      max-width: 460px; width: calc(100% - 2rem);
+      box-shadow: var(--shadow-xl); background: var(--bg-white);
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); margin: 0;
+    }
+    .pay-dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(4px); }
+    .pay-dialog__inner { padding: 1.75rem; }
+    .pay-dialog__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .pay-dialog__title { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--slate-900); }
+    .pay-dialog__close {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--slate-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; color: var(--slate-500);
+    }
+    .pay-dialog__close:hover { background: var(--slate-200); }
+    .pay-plan-info { background: var(--blue-faint); border: 1px solid rgba(37,99,235,.15); border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1.25rem; font-size: .875rem; color: var(--slate-700); }
+    .pay-plan-info strong { color: var(--blue-deep); }
+    .pay-methods { display: flex; gap: .5rem; margin-bottom: 1.25rem; }
+    .pay-method-btn {
+      flex: 1; padding: .6rem .5rem; border: 1.5px solid var(--slate-200);
+      border-radius: 9px; text-align: center; font-size: .8rem; font-weight: 600;
+      cursor: pointer; transition: .15s; background: transparent;
+      font-family: var(--font-body); color: var(--slate-600);
+    }
+    .pay-method-btn.active { border-color: var(--blue-mid); color: var(--blue-mid); background: var(--blue-faint); }
+    .pay-method-btn:hover:not(.active) { border-color: var(--slate-300); }
+    .pay-section { display: none; }
+    .pay-section.active { display: block; }
+    .pay-desc { font-size: .825rem; color: var(--slate-500); margin-bottom: 1rem; line-height: 1.5; }
+    .pay-result { margin-top: 1rem; background: var(--slate-100); border-radius: 10px; padding: 1rem; text-align: center; display: none; }
+    .pay-result.show { display: block; }
+    .pix-code { font-family: monospace; font-size: .78rem; word-break: break-all; color: var(--slate-700); margin: .6rem 0; }
+    .pay-security { text-align: center; font-size: .72rem; color: var(--slate-400); margin-top: 1rem; }
+    .cc-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
   </style>
 </head>
 <body>
@@ -3408,19 +3448,27 @@
       <!-- Formulário: Cadastro -->
       <div id="formSignup" style="display:none">
         <div class="auth-form-group">
-          <label class="auth-label" for="signupNome">Nome completo</label>
+          <label class="auth-label" for="signupNome">Nome completo *</label>
           <input class="auth-input" type="text" id="signupNome" placeholder="João Silva" autocomplete="name" />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupCpfCnpj">CPF ou CNPJ *</label>
+          <input class="auth-input" type="text" id="signupCpfCnpj" placeholder="000.000.000-00" maxlength="18" />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="signupTelefone">Celular / WhatsApp *</label>
+          <input class="auth-input" type="tel" id="signupTelefone" placeholder="(44) 99999-9999" maxlength="15" />
         </div>
         <div class="auth-form-group">
           <label class="auth-label" for="signupEmpresa">Empresa (opcional)</label>
           <input class="auth-input" type="text" id="signupEmpresa" placeholder="Minha Empresa Ltda." />
         </div>
         <div class="auth-form-group">
-          <label class="auth-label" for="signupEmail">E-mail</label>
+          <label class="auth-label" for="signupEmail">E-mail *</label>
           <input class="auth-input" type="email" id="signupEmail" placeholder="seu@email.com" autocomplete="email" />
         </div>
         <div class="auth-form-group">
-          <label class="auth-label" for="signupPass">Senha</label>
+          <label class="auth-label" for="signupPass">Senha *</label>
           <input class="auth-input" type="password" id="signupPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
         </div>
         <div class="auth-error" id="signupError"></div>
@@ -3501,7 +3549,7 @@
         <!-- PAGAMENTOS -->
         <div class="portal-page" id="ppage-pagamentos">
           <div id="pPayBar" style="margin-bottom:.9rem;display:none">
-            <button class="btn btn-primary" onclick="alert('Integre com o backend Asaas para gerar cobranças.')">💳 Pagar licença</button>
+            <button class="btn btn-primary" onclick="abrirPagamento(_licenca?.plano_id, 'mensal')">💳 Pagar licença</button>
           </div>
           <div class="p-card">
             <div class="p-card__title">Histórico de cobranças</div>
@@ -3554,6 +3602,76 @@
 
   <!-- Toast global -->
   <div class="g-toast" id="gToast"></div>
+
+  <!-- ==========================================
+       MODAL DE PAGAMENTO ASAAS
+       ========================================== -->
+  <dialog class="pay-dialog" id="payDialog">
+    <div class="pay-dialog__inner">
+      <div class="pay-dialog__header">
+        <div class="pay-dialog__title">Assinar plano</div>
+        <button class="pay-dialog__close" id="payDialogClose">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="pay-plan-info">
+        Plano: <strong id="payPlanNome">—</strong> &nbsp;·&nbsp;
+        Valor: <strong id="payPlanValor">—</strong>
+      </div>
+
+      <div class="pay-methods">
+        <button class="pay-method-btn active" data-pay="PIX"         onclick="selectPayMethod('PIX')">🔵 PIX</button>
+        <button class="pay-method-btn"        data-pay="BOLETO"      onclick="selectPayMethod('BOLETO')">📄 Boleto</button>
+        <button class="pay-method-btn"        data-pay="CREDIT_CARD" onclick="selectPayMethod('CREDIT_CARD')">💳 Cartão</button>
+      </div>
+
+      <!-- PIX -->
+      <div class="pay-section active" id="paySecPIX">
+        <p class="pay-desc">O código PIX é gerado na hora. Você tem 30 minutos para pagar. A licença ativa automaticamente após a confirmação.</p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" id="btnGerarPIX" onclick="gerarCobranca('PIX')">Gerar QR Code / Copia e cola</button>
+        <div class="pay-result" id="pixResult">
+          <div style="font-size:.78rem;color:var(--slate-500);margin-bottom:.35rem">Copia e cola PIX:</div>
+          <div class="pix-code" id="pixCode">—</div>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pixCode').textContent).then(()=>toast('PIX copiado!','success'))">Copiar código</button>
+        </div>
+      </div>
+
+      <!-- BOLETO -->
+      <div class="pay-section" id="paySecBOLETO">
+        <p class="pay-desc">O boleto vence em 3 dias úteis. A licença é ativada em até 2 dias úteis após o pagamento.</p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="gerarCobranca('BOLETO')">Gerar boleto</button>
+        <div class="pay-result" id="boletoResult">
+          <a id="boletoLink" href="#" target="_blank" class="btn btn-ghost" style="display:inline-flex">📄 Abrir boleto</a>
+        </div>
+      </div>
+
+      <!-- CARTÃO -->
+      <div class="pay-section" id="paySecCREDIT_CARD">
+        <div class="p-form-group">
+          <label class="p-label">Número do cartão</label>
+          <input class="p-input" type="text" id="ccNum" placeholder="0000 0000 0000 0000" maxlength="19" oninput="this.value=this.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim()" />
+        </div>
+        <div class="cc-row">
+          <div class="p-form-group">
+            <label class="p-label">Validade</label>
+            <input class="p-input" type="text" id="ccExp" placeholder="MM/AA" maxlength="5" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4).replace(/^(\d{2})(\d)/,'$1/$2')" />
+          </div>
+          <div class="p-form-group">
+            <label class="p-label">CVV</label>
+            <input class="p-input" type="text" id="ccCvv" placeholder="123" maxlength="4" />
+          </div>
+        </div>
+        <div class="p-form-group">
+          <label class="p-label">Nome no cartão</label>
+          <input class="p-input" type="text" id="ccNome" placeholder="JOÃO SILVA" style="text-transform:uppercase" />
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="gerarCobranca('CREDIT_CARD')">Pagar agora</button>
+      </div>
+
+      <p class="pay-security">🔒 Pagamentos processados com segurança pela Asaas</p>
+    </div>
+  </dialog>
 
   <dialog class="trial-modal" id="trialModal" aria-labelledby="trial-modal-title">
     <div class="trial-modal__inner">
@@ -3616,7 +3734,7 @@
        ================================================ */
     const SUPABASE_URL  = 'https://iazrkpfpnubkrwhncsog.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_W98PckoJNh5FSajWjvcAmw_nTvtOWTn';
-    const BACKEND_URL   = 'geslpbackend-production.up.railway.app';
+    const BACKEND_URL   = 'https://geslpbackend-production.up.railway.app';
     /* ------------------------------------------------
        INICIALIZAÇÃO DO SUPABASE
     ------------------------------------------------ */
@@ -3752,20 +3870,68 @@
     }
 
     async function doSignup() {
-      const nome    = document.getElementById('signupNome').value.trim();
-      const empresa = document.getElementById('signupEmpresa').value.trim();
-      const email   = document.getElementById('signupEmail').value.trim();
-      const pass    = document.getElementById('signupPass').value;
-      const btn     = document.getElementById('signupBtn');
-      const err     = document.getElementById('signupError');
+      const nome     = document.getElementById('signupNome').value.trim();
+      const cpfCnpj  = document.getElementById('signupCpfCnpj').value.replace(/\D/g, '');
+      const telefone = document.getElementById('signupTelefone').value.replace(/\D/g, '');
+      const empresa  = document.getElementById('signupEmpresa').value.trim();
+      const email    = document.getElementById('signupEmail').value.trim();
+      const pass     = document.getElementById('signupPass').value;
+      const btn      = document.getElementById('signupBtn');
+      const err      = document.getElementById('signupError');
+
       err.classList.remove('show');
-      if (!nome) { err.textContent = 'Informe seu nome.'; err.classList.add('show'); return; }
+
+      // Validações básicas
+      if (!nome)                              { err.textContent = 'Informe seu nome completo.';             err.classList.add('show'); return; }
+      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) { err.textContent = 'CPF (11 dígitos) ou CNPJ (14 dígitos) inválido.'; err.classList.add('show'); return; }
+      if (telefone.length < 10)               { err.textContent = 'Informe um celular válido com DDD.';    err.classList.add('show'); return; }
+      if (!email)                             { err.textContent = 'Informe seu e-mail.';                   err.classList.add('show'); return; }
+      if (pass.length < 6)                    { err.textContent = 'A senha deve ter pelo menos 6 caracteres.'; err.classList.add('show'); return; }
+
       btn.disabled = true; btn.textContent = 'Criando conta...';
-      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { nome, empresa } } });
-      if (error) { btn.disabled = false; btn.textContent = 'Criar conta grátis'; err.textContent = traduzirErro(error.message); err.classList.add('show'); return; }
-      if (data.user) await sb.from('clientes').upsert({ id: data.user.id, nome, empresa });
-      btn.disabled = false; btn.textContent = 'Criar conta grátis';
-      toast('Conta criada! Verifique seu e-mail para confirmar.', 'success', 5000);
+
+      try {
+        // 1. Cria usuário no Supabase Auth
+        const { data, error: authErr } = await sb.auth.signUp({
+          email, password: pass,
+          options: { data: { nome, empresa } }
+        });
+        if (authErr) throw new Error(traduzirErro(authErr.message));
+        if (!data.user) throw new Error('Não foi possível criar a conta. Tente novamente.');
+
+        // 2. Envia dados para o backend criar o cliente na Asaas
+        //    O backend salva o asaas_id na tabela clientes e retorna erro se falhar
+        const res = await fetch(BACKEND_URL + '/api/cliente/registrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId:   data.user.id,
+            nome,
+            email,
+            cpfCnpj,
+            telefone,
+            empresa,
+          })
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+          // Remove o usuário do Auth para não deixar conta "fantasma" sem perfil Asaas
+          // (o backend já faz rollback do insert no clientes se falhar)
+          throw new Error(json.message || 'Erro ao registrar na plataforma de pagamento.');
+        }
+
+        toast('Conta criada com sucesso! Verifique seu e-mail para confirmar.', 'success', 6000);
+        // Troca para aba de login automaticamente
+        authSwitchTab('login');
+        document.getElementById('loginEmail').value = email;
+
+      } catch (e) {
+        err.textContent = e.message;
+        err.classList.add('show');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Criar conta grátis';
+      }
     }
 
     async function doForgotPassword(e) {
@@ -3868,7 +4034,7 @@
           <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">PERIODICIDADE</div><div style="font-weight:600;font-size:.875rem">${cap(_licenca.periodicidade)}</div></div>
           <div><div class="p-stat__label" style="font-size:.7rem;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">MAX. USUÁRIOS</div><div style="font-weight:600;font-size:.875rem">${_plano?.max_usuarios || '—'}</div></div>
         </div>
-        ${_licenca.status === 'pendente' ? `<div style="margin-top:1rem"><button class="btn btn-primary" onclick="alert('Configure o backend Asaas para processar pagamentos.')">💳 Pagar licença</button></div>` : ''}
+        ${_licenca.status === 'pendente' ? `<div style="margin-top:1rem"><button class="btn btn-primary" onclick="abrirPagamento('${_licenca.plano_id}', '${_licenca.periodicidade}')">💳 Pagar licença</button></div>` : ''}
       `;
     }
 
@@ -3923,6 +4089,7 @@
       _loaded.suporte = false; loadTickets();
     }
     async function loadTickets() {
+      if (!_user) return;
       const { data } = await sb.from('tickets').select('*').eq('cliente_id', _user.id).order('criado_em', { ascending: false });
       const el = document.getElementById('pTicketsLista');
       if (!data?.length) { el.textContent = 'Nenhum chamado aberto.'; return; }
@@ -3952,7 +4119,7 @@
           <div class="plan-card-p__name">${p.nome}</div>
           <div class="plan-card-p__price">R$ ${Number(p.preco_mensal).toFixed(0)}<small>/mês</small></div>
           <div class="plan-card-p__desc">${p.descricao || ''}</div>
-          ${!cur ? `<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:.8rem;padding:.6rem" onclick="alert('Configure o backend Asaas para processar assinaturas.')">Assinar</button>` : '<span style="font-size:.78rem;color:#059669">✔ Plano atual</span>'}
+          ${!cur ? `<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:.8rem;padding:.6rem" onclick="assinarPlano('${p.id}','${p.nome}',${p.preco_mensal})">Assinar</button>` : '<span style="font-size:.78rem;color:#059669">✔ Plano atual</span>'}
         </div>`;
       }).join('');
     }
@@ -3975,6 +4142,150 @@
     /* Enter nos campos de auth */
     document.getElementById('loginPass')?.addEventListener('keydown',   e => e.key==='Enter' && doLogin());
     document.getElementById('signupPass')?.addEventListener('keydown',  e => e.key==='Enter' && doSignup());
+
+    /* Máscara CPF/CNPJ */
+    document.getElementById('signupCpfCnpj')?.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 14);
+      if (v.length <= 11) {
+        v = v.replace(/(\d{3})(\d)/, '$1.$2')
+             .replace(/(\d{3})(\d)/, '$1.$2')
+             .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      } else {
+        v = v.replace(/(\d{2})(\d)/, '$1.$2')
+             .replace(/(\d{3})(\d)/, '$1.$2')
+             .replace(/(\d{3})(\d)/, '$1/$2')
+             .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+      }
+      this.value = v;
+    });
+
+    /* Máscara telefone */
+    document.getElementById('signupTelefone')?.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 11);
+      v = v.replace(/(\d{2})(\d)/, '($1) $2');
+      v = v.length > 9
+        ? v.replace(/(\d{5})(\d{1,4})$/, '$1-$2')
+        : v.replace(/(\d{4})(\d{1,4})$/, '$1-$2');
+      this.value = v;
+    });
+
+    /* ================================================
+       PAGAMENTO — modal + integração Asaas via backend
+    ================================================ */
+    let _payPlanoId     = null;
+    let _payPeriodicidade = 'mensal';
+    let _payMetodo      = 'PIX';
+
+    const payDialog = document.getElementById('payDialog');
+    document.getElementById('payDialogClose')?.addEventListener('click', () => payDialog.close());
+    payDialog?.addEventListener('click', e => { if (e.target === payDialog) payDialog.close(); });
+
+    async function assinarPlano(planoId, planoNome, precoMensal) {
+      if (!_user) { toast('Faça login primeiro.', 'error'); return; }
+
+      // Cria ou atualiza licença com status pendente
+      const { data: lic, error } = await sb.from('licencas').upsert({
+        ...(_licenca?.id ? { id: _licenca.id } : {}),
+        cliente_id:    _user.id,
+        plano_id:      planoId,
+        status:        'pendente',
+        periodicidade: 'mensal',
+      }, { onConflict: 'cliente_id' }).select('*, planos(*)').single();
+
+      if (error) { toast('Erro ao criar licença: ' + error.message, 'error'); return; }
+      _licenca = lic;
+      _plano   = lic.planos;
+
+      abrirPagamento(planoId, 'mensal', planoNome, precoMensal);
+    }
+
+    function abrirPagamento(planoId, periodicidade, nome, valor) {
+      _payPlanoId      = planoId;
+      _payPeriodicidade = periodicidade || 'mensal';
+
+      // Pega nome e valor do plano atual se não passado
+      const n = nome  || _plano?.nome || '—';
+      const v = valor || (_plano ? (_payPeriodicidade === 'anual' ? _plano.preco_anual : _plano.preco_mensal) : 0);
+
+      document.getElementById('payPlanNome').textContent  = n;
+      document.getElementById('payPlanValor').textContent = 'R$ ' + Number(v).toFixed(2).replace('.', ',') + (_payPeriodicidade === 'anual' ? '/ano' : '/mês');
+
+      // Reseta estado do modal
+      selectPayMethod('PIX');
+      document.getElementById('pixResult').classList.remove('show');
+      document.getElementById('boletoResult').classList.remove('show');
+      document.getElementById('btnGerarPIX').disabled = false;
+      document.getElementById('btnGerarPIX').textContent = 'Gerar QR Code / Copia e cola';
+
+      if (payDialog.showModal) payDialog.showModal();
+    }
+
+    function selectPayMethod(method) {
+      _payMetodo = method;
+      document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-pay="${method}"]`)?.classList.add('active');
+      document.querySelectorAll('.pay-section').forEach(s => s.classList.remove('active'));
+      const sec = document.getElementById('paySec' + method);
+      if (sec) sec.classList.add('active');
+    }
+
+    async function gerarCobranca(forma) {
+      if (!_licenca) { toast('Nenhuma licença encontrada.', 'error'); return; }
+      if (!_user)    { toast('Faça login primeiro.', 'error'); return; }
+
+      const btn = forma === 'PIX' ? document.getElementById('btnGerarPIX') : null;
+      if (btn) { btn.disabled = true; btn.textContent = 'Gerando...'; }
+
+      try {
+        const session = await sb.auth.getSession();
+        const token   = session.data.session?.access_token;
+
+        const body = {
+          licenca_id:    _licenca.id,
+          cliente_id:    _user.id,
+          forma,
+          periodicidade: _payPeriodicidade,
+          ...(forma === 'CREDIT_CARD' ? {
+            cartao: {
+              numero:  document.getElementById('ccNum').value.replace(/\s/g, ''),
+              expMes:  document.getElementById('ccExp').value.split('/')[0],
+              expAno:  '20' + document.getElementById('ccExp').value.split('/')[1],
+              cvv:     document.getElementById('ccCvv').value,
+              titular: document.getElementById('ccNome').value,
+            }
+          } : {})
+        };
+
+        const res  = await fetch(BACKEND_URL + '/api/assinatura', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Erro ao gerar cobrança');
+
+        if (forma === 'PIX' && data.pixCopiaECola) {
+          document.getElementById('pixCode').textContent = data.pixCopiaECola;
+          document.getElementById('pixResult').classList.add('show');
+          toast('PIX gerado! Copie o código abaixo.', 'success');
+        } else if (forma === 'BOLETO' && data.bankSlipUrl) {
+          document.getElementById('boletoLink').href = data.bankSlipUrl;
+          document.getElementById('boletoResult').classList.add('show');
+          toast('Boleto gerado!', 'success');
+        } else if (forma === 'CREDIT_CARD') {
+          toast('Pagamento aprovado! Sua licença está ativa.', 'success', 5000);
+          payDialog.close();
+          _loaded.licenca = false; _loaded.dashboard = false;
+          loadPortalTab('dashboard'); loadPortalTab('licenca');
+        }
+      } catch (e) {
+        toast('Erro: ' + e.message, 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Gerar QR Code / Copia e cola'; }
+      }
+    }
+
+    // Estado inicial do modal de pagamento já gerenciado por selectPayMethod()
   </script>
 
   <script>
