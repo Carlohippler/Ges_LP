@@ -3766,14 +3766,14 @@
        APÓS LOGIN — carrega dados e atualiza UI
     ------------------------------------------------ */
     async function onLogin() {
-      // Perfil do cliente
-      const { data: c } = await sb.from('clientes').select('*').eq('id', _user.id).single();
-      _cliente = c;
+      // Perfil do cliente — limit(1) não lança 406 se não encontrar
+      const { data: cs } = await sb.from('clientes').select('*').eq('id', _user.id).limit(1);
+      _cliente = cs?.[0] || null;
 
       // Licença + plano
-      const { data: l } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).single();
-      _licenca = l;
-      _plano   = l?.planos;
+      const { data: ls } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).limit(1);
+      _licenca = ls?.[0] || null;
+      _plano   = _licenca?.planos || null;
 
       updateHeaderUI();
       if (document.getElementById('authDialog').open) document.getElementById('authDialog').close();
@@ -3996,7 +3996,8 @@
       document.getElementById('pStat2').textContent = _plano?.nome || '—';
       document.getElementById('pStat2sub').textContent = _licenca ? cap(_licenca.periodicidade) : '—';
 
-      const { data: v } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false }).limit(1).single();
+      const { data: vs } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false }).limit(1);
+      const v = vs?.[0] || null;
       document.getElementById('pStat3').textContent = v ? 'v' + v.versao : '—';
 
       const qd = document.getElementById('pQuickDownloads');
@@ -4183,18 +4184,21 @@
     async function assinarPlano(planoId, planoNome, precoMensal) {
       if (!_user) { toast('Faça login primeiro.', 'error'); return; }
 
-      // Cria ou atualiza licença com status pendente
-      const { data: lic, error } = await sb.from('licencas').upsert({
+      // Passo 1: upsert da licença (sem join — Supabase não suporta select com join no upsert)
+      const { error: upsertErr } = await sb.from('licencas').upsert({
         ...(_licenca?.id ? { id: _licenca.id } : {}),
         cliente_id:    _user.id,
         plano_id:      planoId,
         status:        'pendente',
         periodicidade: 'mensal',
-      }, { onConflict: 'cliente_id' }).select('*, planos(*)').single();
+      }, { onConflict: 'cliente_id' });
 
-      if (error) { toast('Erro ao criar licença: ' + error.message, 'error'); return; }
-      _licenca = lic;
-      _plano   = lic.planos;
+      if (upsertErr) { toast('Erro ao criar licença: ' + upsertErr.message, 'error'); return; }
+
+      // Passo 2: busca a licença com o join separado
+      const { data: ls } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).limit(1);
+      _licenca = ls?.[0] || null;
+      _plano   = _licenca?.planos || null;
 
       abrirPagamento(planoId, 'mensal', planoNome, precoMensal);
     }
