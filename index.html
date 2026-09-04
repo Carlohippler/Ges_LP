@@ -3766,7 +3766,7 @@
        APÓS LOGIN — carrega dados e atualiza UI
     ------------------------------------------------ */
     async function onLogin() {
-      // Perfil do cliente — limit(1) não lança 406 se não encontrar
+      // Perfil do cliente
       const { data: cs } = await sb.from('clientes').select('*').eq('id', _user.id).limit(1);
       _cliente = cs?.[0] || null;
 
@@ -3777,6 +3777,87 @@
 
       updateHeaderUI();
       if (document.getElementById('authDialog').open) document.getElementById('authDialog').close();
+
+      // Se o cliente não tem cadastro completo (sem asaas_id), abre modal de completar perfil
+      if (!_cliente?.asaas_id) {
+        setTimeout(() => abrirCompletarCadastro(), 400);
+      }
+    }
+
+    /* ------------------------------------------------
+       COMPLETAR CADASTRO — abre authDialog na aba de
+       completar perfil quando faltam dados do cliente
+    ------------------------------------------------ */
+    function abrirCompletarCadastro() {
+      // Preenche os campos com o que já existe
+      document.getElementById('signupNome').value     = _cliente?.nome     || _user?.user_metadata?.nome || '';
+      document.getElementById('signupEmpresa').value  = _cliente?.empresa  || '';
+      document.getElementById('signupEmail').value    = _user?.email       || '';
+      document.getElementById('signupCpfCnpj').value  = _cliente?.cpf_cnpj ? formatCpfCnpj(_cliente.cpf_cnpj) : '';
+      document.getElementById('signupTelefone').value = _cliente?.telefone ? formatTelefone(_cliente.telefone) : '';
+
+      // Troca para aba de cadastro e abre o modal com aviso
+      authSwitchTab('signup');
+      document.getElementById('signupError').textContent = '⚠️ Complete seu cadastro para poder assinar um plano.';
+      document.getElementById('signupError').classList.add('show');
+      document.getElementById('signupPass').closest('.auth-form-group').style.display = 'none';
+      document.getElementById('signupBtn').textContent = 'Salvar e continuar';
+      document.getElementById('signupBtn').onclick = salvarPerfil;
+
+      const authDialog = document.getElementById('authDialog');
+      if (authDialog.showModal) authDialog.showModal();
+    }
+
+    function formatCpfCnpj(v) {
+      v = v.replace(/\D/g, '');
+      if (v.length === 11) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    function formatTelefone(v) {
+      v = v.replace(/\D/g, '');
+      if (v.length === 11) return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      return v.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+
+    async function salvarPerfil() {
+      const nome     = document.getElementById('signupNome').value.trim();
+      const cpfCnpj  = document.getElementById('signupCpfCnpj').value.replace(/\D/g, '');
+      const telefone = document.getElementById('signupTelefone').value.replace(/\D/g, '');
+      const empresa  = document.getElementById('signupEmpresa').value.trim();
+      const err      = document.getElementById('signupError');
+      const btn      = document.getElementById('signupBtn');
+
+      if (!nome)                                             { err.textContent = 'Informe seu nome.';              err.classList.add('show'); return; }
+      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)  { err.textContent = 'CPF ou CNPJ inválido.';          err.classList.add('show'); return; }
+      if (telefone.length < 10)                             { err.textContent = 'Informe um celular com DDD.';    err.classList.add('show'); return; }
+
+      btn.disabled = true; btn.textContent = 'Salvando...';
+
+      try {
+        const res = await fetch(BACKEND_URL + '/api/cliente/registrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: _user.id, nome, email: _user.email, cpfCnpj, telefone, empresa })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Erro ao salvar.');
+
+        // Recarrega o perfil
+        const { data: cs } = await sb.from('clientes').select('*').eq('id', _user.id).limit(1);
+        _cliente = cs?.[0] || null;
+        updateHeaderUI();
+
+        // Restaura o modal ao estado original
+        document.getElementById('signupPass').closest('.auth-form-group').style.display = '';
+        document.getElementById('signupBtn').textContent = 'Criar conta grátis';
+        document.getElementById('signupBtn').onclick = doSignup;
+        document.getElementById('authDialog').close();
+        toast('Perfil atualizado! Agora você pode assinar um plano.', 'success', 4000);
+      } catch (e) {
+        err.textContent = e.message; err.classList.add('show');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Salvar e continuar';
+      }
     }
 
     /* ------------------------------------------------
