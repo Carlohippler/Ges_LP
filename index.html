@@ -2569,8 +2569,8 @@
         <a href="#suporte" class="mobile-nav__link">Suporte</a>
       </nav>
       <div class="mobile-nav__actions">
-        <button type="button" onclick="openAuth('login')"  class="btn btn-ghost">Entrar</button>
-        <button type="button" onclick="openAuth('signup')" class="btn btn-primary btn-cta">Criar conta grátis</button>
+        <a href="#entrar" class="btn btn-ghost">Entrar</a>
+        <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta">Testar Grátis</button>
       </div>
     </div>
   </header>
@@ -2604,7 +2604,7 @@
 
             <!-- CTAs -->
             <div class="hero__cta-group">
-        <button type="button" onclick="openAuth('signup')" class="btn btn-primary btn-cta" id="hero-cta">
+              <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta" id="hero-cta">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 12.6A5.6 5.6 0 1 1 8 2.4a5.6 5.6 0 0 1 0 11.2zM6.3 5.1l4.2 2.5c.3.2.3.6 0 .8L6.3 10.9c-.3.2-.7 0-.7-.4V5.5c0-.4.4-.6.7-.4z" fill="currentColor"/>
                 </svg>
@@ -3631,14 +3631,9 @@
         <p class="pay-desc">O código PIX é gerado na hora. Você tem 30 minutos para pagar. A licença ativa automaticamente após a confirmação.</p>
         <button class="btn btn-primary" style="width:100%;justify-content:center" id="btnGerarPIX" onclick="gerarCobranca('PIX')">Gerar QR Code / Copia e cola</button>
         <div class="pay-result" id="pixResult">
-          <!-- QR Code gerado via API pública de QR -->
-          <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:.75rem">
-            <img id="pixQrImg" src="" alt="QR Code PIX" style="width:180px;height:180px;border-radius:8px;border:1px solid var(--slate-200);display:none" />
-            <button class="copy-btn" id="btnCopiarQR" style="display:none" onclick="copiarQR()">📋 Copiar QR Code</button>
-          </div>
           <div style="font-size:.78rem;color:var(--slate-500);margin-bottom:.35rem">Copia e cola PIX:</div>
           <div class="pix-code" id="pixCode">—</div>
-          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pixCode').textContent).then(()=>toast('Código PIX copiado!','success'))">Copiar código</button>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pixCode').textContent).then(()=>toast('PIX copiado!','success'))">Copiar código</button>
         </div>
       </div>
 
@@ -3701,39 +3696,31 @@
           <div class="primary-option__title">Acessar pelo navegador</div>
           <div class="primary-option__desc">Comece agora, criando sua conta grátis.</div>
         </div>
-        <a href="#" class="btn btn-primary">Criar conta grátis</a>
+        <button type="button" class="btn btn-primary" id="trialToSignupBtn">Criar conta grátis</button>
       </div>
 
       <div class="modal-divider">ou baixe o aplicativo</div>
 
       <div class="download-label">Disponível para desktop & Android</div>
       <div class="download-grid">
-            <button type="button" onclick="downloadOuCadastro('windows')" class="download-card">
+            <!-- Botão para Windows (.exe) -->
+            <a href="downloads/GES_Setup.exe" download="GES_Setup.exe" class="download-card">
                 <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M0 3.449L9.75 2.1v9.451H0m10.95-9.6L24 0v11.4H10.95M0 12.6h9.75v9.451L0 20.7m10.95-8.1H24V24l-13.05-1.8"/>
                 </svg>
                 <span class="download-card__os">Windows</span>
                 <span class="download-card__meta">Instalador .exe</span>
-            </button>
+            </a>
 
-            <button type="button" onclick="downloadOuCadastro('android')" class="download-card">
+            <!-- Botão para Android (.apk) -->
+            <a href="downloads/GES_App.apk" download="GES_App.apk" class="download-card">
                 <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1522-.5676.416.416 0 00-.5676.1522l-2.0223 3.503C15.5902 8.1633 13.8535 7.76 12 7.76s-3.5902.4033-5.1367 1.1401L4.841 5.397a.416.416 0 00-.5676-.1522.416.416 0 00-.1522.5676l1.9973 3.4592C2.688 11.0863.365 14.334.01 18.24h23.98c-.355-3.906-2.678-7.1537-6.1055-8.9186"/>
                 </svg>
                 <span class="download-card__os">Android</span>
                 <span class="download-card__meta">Instalador .apk</span>
-            </button>
+            </a>
         </div>
-
-      <!-- Mensagem exibida quando o usuário não está logado -->
-      <div id="dlAuthMsg" style="display:none;margin-top:1rem;padding:1rem;background:var(--blue-faint);border:1px solid var(--blue-glow);border-radius:10px;text-align:center">
-        <p style="font-size:.875rem;color:var(--slate-700);margin-bottom:.75rem">
-          Para baixar o GES você precisa de uma conta gratuita.
-        </p>
-        <button type="button" onclick="openAuth('signup')" class="btn btn-primary" style="width:100%;justify-content:center">
-          Criar conta grátis
-        </button>
-      </div>
 
       <p class="note">
         Placeholder de demonstração — os links acima ainda não apontam para instaladores reais.
@@ -3780,97 +3767,16 @@
     ------------------------------------------------ */
     async function onLogin() {
       // Perfil do cliente
-      const { data: cs } = await sb.from('clientes').select('*').eq('id', _user.id).limit(1);
-      _cliente = cs?.[0] || null;
+      const { data: c } = await sb.from('clientes').select('*').eq('id', _user.id).single();
+      _cliente = c;
 
       // Licença + plano
-      const { data: ls } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).limit(1);
-      _licenca = ls?.[0] || null;
-      _plano   = _licenca?.planos || null;
+      const { data: l } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).single();
+      _licenca = l;
+      _plano   = l?.planos;
 
       updateHeaderUI();
       if (document.getElementById('authDialog').open) document.getElementById('authDialog').close();
-
-      // Se o cliente não tem cadastro completo (sem asaas_id), abre modal de completar perfil
-      if (!_cliente?.asaas_id) {
-        setTimeout(() => abrirCompletarCadastro(), 400);
-      }
-    }
-
-    /* ------------------------------------------------
-       COMPLETAR CADASTRO — abre authDialog na aba de
-       completar perfil quando faltam dados do cliente
-    ------------------------------------------------ */
-    function abrirCompletarCadastro() {
-      // Preenche os campos com o que já existe
-      document.getElementById('signupNome').value     = _cliente?.nome     || _user?.user_metadata?.nome || '';
-      document.getElementById('signupEmpresa').value  = _cliente?.empresa  || '';
-      document.getElementById('signupEmail').value    = _user?.email       || '';
-      document.getElementById('signupCpfCnpj').value  = _cliente?.cpf_cnpj ? formatCpfCnpj(_cliente.cpf_cnpj) : '';
-      document.getElementById('signupTelefone').value = _cliente?.telefone ? formatTelefone(_cliente.telefone) : '';
-
-      // Troca para aba de cadastro e abre o modal com aviso
-      authSwitchTab('signup');
-      document.getElementById('signupError').textContent = '⚠️ Complete seu cadastro para poder assinar um plano.';
-      document.getElementById('signupError').classList.add('show');
-      document.getElementById('signupPass').closest('.auth-form-group').style.display = 'none';
-      document.getElementById('signupBtn').textContent = 'Salvar e continuar';
-      document.getElementById('signupBtn').onclick = salvarPerfil;
-
-      const authDialog = document.getElementById('authDialog');
-      if (authDialog.showModal) authDialog.showModal();
-    }
-
-    function formatCpfCnpj(v) {
-      v = v.replace(/\D/g, '');
-      if (v.length === 11) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-      return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    }
-    function formatTelefone(v) {
-      v = v.replace(/\D/g, '');
-      if (v.length === 11) return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-      return v.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    }
-
-    async function salvarPerfil() {
-      const nome     = document.getElementById('signupNome').value.trim();
-      const cpfCnpj  = document.getElementById('signupCpfCnpj').value.replace(/\D/g, '');
-      const telefone = document.getElementById('signupTelefone').value.replace(/\D/g, '');
-      const empresa  = document.getElementById('signupEmpresa').value.trim();
-      const err      = document.getElementById('signupError');
-      const btn      = document.getElementById('signupBtn');
-
-      if (!nome)                                             { err.textContent = 'Informe seu nome.';              err.classList.add('show'); return; }
-      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)  { err.textContent = 'CPF ou CNPJ inválido.';          err.classList.add('show'); return; }
-      if (telefone.length < 10)                             { err.textContent = 'Informe um celular com DDD.';    err.classList.add('show'); return; }
-
-      btn.disabled = true; btn.textContent = 'Salvando...';
-
-      try {
-        const res = await fetch(BACKEND_URL + '/api/cliente/registrar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: _user.id, nome, email: _user.email, cpfCnpj, telefone, empresa })
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.message || 'Erro ao salvar.');
-
-        // Recarrega o perfil
-        const { data: cs } = await sb.from('clientes').select('*').eq('id', _user.id).limit(1);
-        _cliente = cs?.[0] || null;
-        updateHeaderUI();
-
-        // Restaura o modal ao estado original
-        document.getElementById('signupPass').closest('.auth-form-group').style.display = '';
-        document.getElementById('signupBtn').textContent = 'Criar conta grátis';
-        document.getElementById('signupBtn').onclick = doSignup;
-        document.getElementById('authDialog').close();
-        toast('Perfil atualizado! Agora você pode assinar um plano.', 'success', 4000);
-      } catch (e) {
-        err.textContent = e.message; err.classList.add('show');
-      } finally {
-        btn.disabled = false; btn.textContent = 'Salvar e continuar';
-      }
     }
 
     /* ------------------------------------------------
@@ -3938,13 +3844,9 @@
     ================================================ */
     const authDialog = document.getElementById('authDialog');
 
-    // openAuth — chamada pelos botões CTA de toda a página
-    function openAuth(tab = 'login') {
-      authSwitchTab(tab);
+    document.getElementById('btnOpenAuth')?.addEventListener('click', () => {
       if (authDialog.showModal) authDialog.showModal();
-    }
-
-    document.getElementById('btnOpenAuth')?.addEventListener('click', () => openAuth('login'));
+    });
     document.getElementById('authDialogClose')?.addEventListener('click', () => authDialog.close());
     authDialog?.addEventListener('click', e => { if (e.target === authDialog) authDialog.close(); });
 
@@ -4094,8 +3996,7 @@
       document.getElementById('pStat2').textContent = _plano?.nome || '—';
       document.getElementById('pStat2sub').textContent = _licenca ? cap(_licenca.periodicidade) : '—';
 
-      const { data: vs } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false }).limit(1);
-      const v = vs?.[0] || null;
+      const { data: v } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false }).limit(1).single();
       document.getElementById('pStat3').textContent = v ? 'v' + v.versao : '—';
 
       const qd = document.getElementById('pQuickDownloads');
@@ -4139,91 +4040,22 @@
 
     /* -- DOWNLOADS -- */
     async function loadDownloads() {
-      const grid   = document.getElementById('pDlGrid');
-      const listEl = document.getElementById('pVersoesLista');
       if (!_licenca || _licenca.status !== 'ativa') {
-        grid.innerHTML = `<p style="color:#dc2626;font-size:.85rem;grid-column:1/-1">
-          ⚠️ Licença ativa necessária para download.<br>
-          <button class="btn btn-primary" style="margin-top:.6rem;font-size:.8rem;padding:.5rem 1rem" onclick="switchPortalTab('planos')">Ver planos</button>
-        </p>`;
-        listEl.textContent = '—';
+        document.getElementById('pDlGrid').innerHTML = `<p style="color:#dc2626;font-size:.85rem;grid-column:1/-1">⚠️ Licença ativa necessária para download.<br><button class="btn btn-primary" style="margin-top:.6rem;font-size:.8rem;padding:.5rem 1rem" onclick="switchPortalTab('planos')">Ver planos</button></p>`;
+        document.getElementById('pVersoesLista').textContent = '—';
         return;
       }
-      // Busca apenas metadados — sem URLs diretas expostas ao cliente
-      const { data } = await sb.from('versoes')
-        .select('versao, descricao, publicada_em, tem_windows, tem_android')
-        .eq('publicada', true)
-        .order('publicada_em', { ascending: false });
-      if (!data?.length) { grid.innerHTML = '<p style="color:var(--slate-500);font-size:.85rem">Nenhuma versão disponível.</p>'; return; }
+      const { data } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false });
+      if (!data?.length) { document.getElementById('pDlGrid').textContent = 'Nenhuma versão disponível.'; return; }
       const v = data[0];
-      grid.innerHTML = `
-        ${v.tem_windows !== false ? `
-          <button onclick="iniciarDownload('windows')" class="dl-card" id="dl-btn-windows">
-            <span class="dl-card__icon">🪟</span>
-            <span class="dl-card__name">Windows</span>
-            <span class="dl-card__meta">.exe · v${v.versao}</span>
-          </button>` : ''}
-        ${v.tem_android !== false ? `
-          <button onclick="iniciarDownload('android')" class="dl-card" id="dl-btn-android">
-            <span class="dl-card__icon">🤖</span>
-            <span class="dl-card__name">Android</span>
-            <span class="dl-card__meta">.apk · v${v.versao}</span>
-          </button>` : ''}
+      document.getElementById('pDlGrid').innerHTML = `
+        ${v.url_windows ? `<a href="${v.url_windows}" download class="dl-card"><span class="dl-card__icon">🪟</span><span class="dl-card__name">Windows</span><span class="dl-card__meta">.exe · v${v.versao}</span></a>` : ''}
+        ${v.url_android ? `<a href="${v.url_android}" download class="dl-card"><span class="dl-card__icon">🤖</span><span class="dl-card__name">Android</span><span class="dl-card__meta">.apk · v${v.versao}</span></a>` : ''}
       `;
-      listEl.innerHTML = data.map(x => `
-        <div style="padding:.55rem 0;border-bottom:1px solid var(--slate-100)">
-          <strong>v${x.versao}</strong>
-          <span style="color:var(--slate-400);font-size:.75rem">${x.publicada_em ? fmtDate(x.publicada_em) : ''}</span>
-          <p style="color:var(--slate-500);font-size:.78rem;margin-top:.15rem">${x.descricao || 'Sem notas de versão.'}</p>
-        </div>
+      document.getElementById('pVersoesLista').innerHTML = data.map(x => `
+        <div style="padding:.55rem 0;border-bottom:1px solid var(--slate-100)"><strong>v${x.versao}</strong> <span style="color:var(--slate-400);font-size:.75rem">${x.publicada_em ? fmtDate(x.publicada_em) : ''}</span>
+        <p style="color:var(--slate-500);font-size:.78rem;margin-top:.15rem">${x.descricao || 'Sem notas de versão.'}</p></div>
       `).join('');
-    }
-
-    function downloadOuCadastro(tipo) {
-      if (!_user) {
-        // Não está logado — mostra a mensagem com botão de criar conta
-        const msg = document.getElementById('dlAuthMsg');
-        if (msg) { msg.style.display = 'block'; msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-        return;
-      }
-      if (!_licenca || _licenca.status !== 'ativa') {
-        // Logado mas sem licença ativa — manda para o portal de planos
-        document.querySelector('[data-open-modal="trialModal"]')?.click();
-        toast('Assine um plano para liberar o download.', 'error', 4000);
-        return;
-      }
-      // Logado e com licença — inicia download seguro via backend
-      iniciarDownload(tipo);
-    }
-
-    async function iniciarDownload(tipo) {
-      const btn = document.getElementById('dl-btn-' + tipo);
-      if (btn) { btn.disabled = true; btn.querySelector('.dl-card__meta').textContent = 'Gerando link...'; }
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        const token = session?.access_token;
-        if (!token) throw new Error('Sessão expirada. Faça login novamente.');
-        const res  = await fetch(BACKEND_URL + '/api/download/' + tipo, {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.message || 'Erro ao gerar link.');
-        // Inicia o download automaticamente via link temporário
-        const a = document.createElement('a');
-        a.href     = json.url;
-        a.download = tipo === 'windows' ? 'GES_Setup_v' + json.versao + '.exe' : 'GES_App_v' + json.versao + '.apk';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast('Download iniciado! O link expira em 5 minutos.', 'success', 4000);
-      } catch (e) {
-        toast(e.message, 'error');
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.querySelector('.dl-card__meta').textContent = (tipo === 'windows' ? '.exe' : '.apk') + ' · clique para baixar';
-        }
-      }
     }
 
     /* -- PAGAMENTOS -- */
@@ -4351,21 +4183,18 @@
     async function assinarPlano(planoId, planoNome, precoMensal) {
       if (!_user) { toast('Faça login primeiro.', 'error'); return; }
 
-      // Passo 1: upsert da licença (sem join — Supabase não suporta select com join no upsert)
-      const { error: upsertErr } = await sb.from('licencas').upsert({
+      // Cria ou atualiza licença com status pendente
+      const { data: lic, error } = await sb.from('licencas').upsert({
         ...(_licenca?.id ? { id: _licenca.id } : {}),
         cliente_id:    _user.id,
         plano_id:      planoId,
         status:        'pendente',
         periodicidade: 'mensal',
-      }, { onConflict: 'cliente_id' });
+      }, { onConflict: 'cliente_id' }).select('*, planos(*)').single();
 
-      if (upsertErr) { toast('Erro ao criar licença: ' + upsertErr.message, 'error'); return; }
-
-      // Passo 2: busca a licença com o join separado
-      const { data: ls } = await sb.from('licencas').select('*, planos(*)').eq('cliente_id', _user.id).limit(1);
-      _licenca = ls?.[0] || null;
-      _plano   = _licenca?.planos || null;
+      if (error) { toast('Erro ao criar licença: ' + error.message, 'error'); return; }
+      _licenca = lic;
+      _plano   = lic.planos;
 
       abrirPagamento(planoId, 'mensal', planoNome, precoMensal);
     }
@@ -4435,32 +4264,14 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Erro ao gerar cobrança');
 
-        if (forma === 'PIX') {
-          if (data.pixCopiaECola) {
-            document.getElementById('pixCode').textContent = data.pixCopiaECola;
-            // Gera QR code via API pública (sem dependência externa)
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.pixCopiaECola)}`;
-            const qrImg = document.getElementById('pixQrImg');
-            qrImg.src = qrUrl;
-            qrImg.style.display = 'block';
-            document.getElementById('btnCopiarQR').style.display = 'inline-flex';
-            document.getElementById('pixResult').classList.add('show');
-            toast('PIX gerado! Escaneie o QR ou copie o código.', 'success');
-          } else if (data.invoiceUrl) {
-            toast('PIX disponível na fatura. Abrindo...', 'success', 4000);
-            window.open(data.invoiceUrl, '_blank');
-          } else {
-            toast('Assinatura criada! O PIX será enviado por e-mail em instantes.', 'success', 5000);
-          }
-        } else if (forma === 'BOLETO') {
-          const url = data.bankSlipUrl || data.invoiceUrl;
-          if (url) {
-            document.getElementById('boletoLink').href = url;
-            document.getElementById('boletoResult').classList.add('show');
-            toast('Boleto gerado!', 'success');
-          } else {
-            toast('Boleto será enviado para seu e-mail em instantes.', 'success', 5000);
-          }
+        if (forma === 'PIX' && data.pixCopiaECola) {
+          document.getElementById('pixCode').textContent = data.pixCopiaECola;
+          document.getElementById('pixResult').classList.add('show');
+          toast('PIX gerado! Copie o código abaixo.', 'success');
+        } else if (forma === 'BOLETO' && data.bankSlipUrl) {
+          document.getElementById('boletoLink').href = data.bankSlipUrl;
+          document.getElementById('boletoResult').classList.add('show');
+          toast('Boleto gerado!', 'success');
         } else if (forma === 'CREDIT_CARD') {
           toast('Pagamento aprovado! Sua licença está ativa.', 'success', 5000);
           payDialog.close();
@@ -4474,27 +4285,7 @@
       }
     }
 
-    function copiarQR() {
-      const img = document.getElementById('pixQrImg');
-      // Tenta copiar a imagem para a área de transferência
-      fetch(img.src)
-        .then(r => r.blob())
-        .then(blob => {
-          try {
-            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-            toast('QR Code copiado!', 'success');
-          } catch {
-            // Fallback: baixa a imagem
-            const a = document.createElement('a');
-            a.href = img.src;
-            a.download = 'pix-qrcode.png';
-            a.click();
-            toast('QR Code baixado!', 'success');
-          }
-        });
-    }
-
-    /* Estado inicial do modal de pagamento já gerenciado por selectPayMethod() */
+    // Estado inicial do modal de pagamento já gerenciado por selectPayMethod()
   </script>
 
   <script>
@@ -4528,6 +4319,16 @@
       });
       // Esc já fecha <dialog> nativamente — sem necessidade de JS extra
     }
+
+    // Botão "Criar conta grátis" dentro do trialModal → fecha trial e abre cadastro
+    document.getElementById('trialToSignupBtn')?.addEventListener('click', () => {
+      trialModal.close();
+      const authDialog = document.getElementById('authDialog');
+      if (authDialog && typeof authDialog.showModal === 'function') {
+        authSwitchTab('signup');
+        authDialog.showModal();
+      }
+    });
 
     // Menu mobile (hambúrguer)
     const navToggle = document.getElementById('navToggle');
