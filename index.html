@@ -3708,24 +3708,32 @@
 
       <div class="download-label">Disponível para desktop & Android</div>
       <div class="download-grid">
-            <!-- Botão para Windows (.exe) -->
-            <a href="downloads/GES_Setup.exe" download="GES_Setup.exe" class="download-card">
+            <button type="button" onclick="downloadOuCadastro('windows')" class="download-card">
                 <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M0 3.449L9.75 2.1v9.451H0m10.95-9.6L24 0v11.4H10.95M0 12.6h9.75v9.451L0 20.7m10.95-8.1H24V24l-13.05-1.8"/>
                 </svg>
                 <span class="download-card__os">Windows</span>
                 <span class="download-card__meta">Instalador .exe</span>
-            </a>
+            </button>
 
-            <!-- Botão para Android (.apk) -->
-            <a href="downloads/GES_App.apk" download="GES_App.apk" class="download-card">
+            <button type="button" onclick="downloadOuCadastro('android')" class="download-card">
                 <svg class="download-card__icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.552 0 .9997.4482.9997.9993s-.4477.9997-.9997.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1522-.5676.416.416 0 00-.5676.1522l-2.0223 3.503C15.5902 8.1633 13.8535 7.76 12 7.76s-3.5902.4033-5.1367 1.1401L4.841 5.397a.416.416 0 00-.5676-.1522.416.416 0 00-.1522.5676l1.9973 3.4592C2.688 11.0863.365 14.334.01 18.24h23.98c-.355-3.906-2.678-7.1537-6.1055-8.9186"/>
                 </svg>
                 <span class="download-card__os">Android</span>
                 <span class="download-card__meta">Instalador .apk</span>
-            </a>
+            </button>
         </div>
+
+      <!-- Mensagem exibida quando o usuário não está logado -->
+      <div id="dlAuthMsg" style="display:none;margin-top:1rem;padding:1rem;background:var(--blue-faint);border:1px solid var(--blue-glow);border-radius:10px;text-align:center">
+        <p style="font-size:.875rem;color:var(--slate-700);margin-bottom:.75rem">
+          Para baixar o GES você precisa de uma conta gratuita.
+        </p>
+        <button type="button" onclick="openAuth('signup')" class="btn btn-primary" style="width:100%;justify-content:center">
+          Criar conta grátis
+        </button>
+      </div>
 
       <p class="note">
         Placeholder de demonstração — os links acima ainda não apontam para instaladores reais.
@@ -4131,22 +4139,91 @@
 
     /* -- DOWNLOADS -- */
     async function loadDownloads() {
+      const grid   = document.getElementById('pDlGrid');
+      const listEl = document.getElementById('pVersoesLista');
       if (!_licenca || _licenca.status !== 'ativa') {
-        document.getElementById('pDlGrid').innerHTML = `<p style="color:#dc2626;font-size:.85rem;grid-column:1/-1">⚠️ Licença ativa necessária para download.<br><button class="btn btn-primary" style="margin-top:.6rem;font-size:.8rem;padding:.5rem 1rem" onclick="switchPortalTab('planos')">Ver planos</button></p>`;
-        document.getElementById('pVersoesLista').textContent = '—';
+        grid.innerHTML = `<p style="color:#dc2626;font-size:.85rem;grid-column:1/-1">
+          ⚠️ Licença ativa necessária para download.<br>
+          <button class="btn btn-primary" style="margin-top:.6rem;font-size:.8rem;padding:.5rem 1rem" onclick="switchPortalTab('planos')">Ver planos</button>
+        </p>`;
+        listEl.textContent = '—';
         return;
       }
-      const { data } = await sb.from('versoes').select('*').eq('publicada', true).order('publicada_em', { ascending: false });
-      if (!data?.length) { document.getElementById('pDlGrid').textContent = 'Nenhuma versão disponível.'; return; }
+      // Busca apenas metadados — sem URLs diretas expostas ao cliente
+      const { data } = await sb.from('versoes')
+        .select('versao, descricao, publicada_em, tem_windows, tem_android')
+        .eq('publicada', true)
+        .order('publicada_em', { ascending: false });
+      if (!data?.length) { grid.innerHTML = '<p style="color:var(--slate-500);font-size:.85rem">Nenhuma versão disponível.</p>'; return; }
       const v = data[0];
-      document.getElementById('pDlGrid').innerHTML = `
-        ${v.url_windows ? `<a href="${v.url_windows}" download class="dl-card"><span class="dl-card__icon">🪟</span><span class="dl-card__name">Windows</span><span class="dl-card__meta">.exe · v${v.versao}</span></a>` : ''}
-        ${v.url_android ? `<a href="${v.url_android}" download class="dl-card"><span class="dl-card__icon">🤖</span><span class="dl-card__name">Android</span><span class="dl-card__meta">.apk · v${v.versao}</span></a>` : ''}
+      grid.innerHTML = `
+        ${v.tem_windows !== false ? `
+          <button onclick="iniciarDownload('windows')" class="dl-card" id="dl-btn-windows">
+            <span class="dl-card__icon">🪟</span>
+            <span class="dl-card__name">Windows</span>
+            <span class="dl-card__meta">.exe · v${v.versao}</span>
+          </button>` : ''}
+        ${v.tem_android !== false ? `
+          <button onclick="iniciarDownload('android')" class="dl-card" id="dl-btn-android">
+            <span class="dl-card__icon">🤖</span>
+            <span class="dl-card__name">Android</span>
+            <span class="dl-card__meta">.apk · v${v.versao}</span>
+          </button>` : ''}
       `;
-      document.getElementById('pVersoesLista').innerHTML = data.map(x => `
-        <div style="padding:.55rem 0;border-bottom:1px solid var(--slate-100)"><strong>v${x.versao}</strong> <span style="color:var(--slate-400);font-size:.75rem">${x.publicada_em ? fmtDate(x.publicada_em) : ''}</span>
-        <p style="color:var(--slate-500);font-size:.78rem;margin-top:.15rem">${x.descricao || 'Sem notas de versão.'}</p></div>
+      listEl.innerHTML = data.map(x => `
+        <div style="padding:.55rem 0;border-bottom:1px solid var(--slate-100)">
+          <strong>v${x.versao}</strong>
+          <span style="color:var(--slate-400);font-size:.75rem">${x.publicada_em ? fmtDate(x.publicada_em) : ''}</span>
+          <p style="color:var(--slate-500);font-size:.78rem;margin-top:.15rem">${x.descricao || 'Sem notas de versão.'}</p>
+        </div>
       `).join('');
+    }
+
+    function downloadOuCadastro(tipo) {
+      if (!_user) {
+        // Não está logado — mostra a mensagem com botão de criar conta
+        const msg = document.getElementById('dlAuthMsg');
+        if (msg) { msg.style.display = 'block'; msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        return;
+      }
+      if (!_licenca || _licenca.status !== 'ativa') {
+        // Logado mas sem licença ativa — manda para o portal de planos
+        document.querySelector('[data-open-modal="trialModal"]')?.click();
+        toast('Assine um plano para liberar o download.', 'error', 4000);
+        return;
+      }
+      // Logado e com licença — inicia download seguro via backend
+      iniciarDownload(tipo);
+    }
+
+    async function iniciarDownload(tipo) {
+      const btn = document.getElementById('dl-btn-' + tipo);
+      if (btn) { btn.disabled = true; btn.querySelector('.dl-card__meta').textContent = 'Gerando link...'; }
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Sessão expirada. Faça login novamente.');
+        const res  = await fetch(BACKEND_URL + '/api/download/' + tipo, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Erro ao gerar link.');
+        // Inicia o download automaticamente via link temporário
+        const a = document.createElement('a');
+        a.href     = json.url;
+        a.download = tipo === 'windows' ? 'GES_Setup_v' + json.versao + '.exe' : 'GES_App_v' + json.versao + '.apk';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast('Download iniciado! O link expira em 5 minutos.', 'success', 4000);
+      } catch (e) {
+        toast(e.message, 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.querySelector('.dl-card__meta').textContent = (tipo === 'windows' ? '.exe' : '.apk') + ' · clique para baixar';
+        }
+      }
     }
 
     /* -- PAGAMENTOS -- */
