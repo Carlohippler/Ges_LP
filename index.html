@@ -2569,8 +2569,8 @@
         <a href="#suporte" class="mobile-nav__link">Suporte</a>
       </nav>
       <div class="mobile-nav__actions">
-        <a href="#entrar" class="btn btn-ghost">Entrar</a>
-        <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta">Testar Grátis</button>
+        <button type="button" onclick="openAuth('login')"  class="btn btn-ghost">Entrar</button>
+        <button type="button" onclick="openAuth('signup')" class="btn btn-primary btn-cta">Criar conta grátis</button>
       </div>
     </div>
   </header>
@@ -2604,7 +2604,7 @@
 
             <!-- CTAs -->
             <div class="hero__cta-group">
-              <button type="button" data-open-modal="trialModal" class="btn btn-primary btn-cta" id="hero-cta">
+        <button type="button" onclick="openAuth('signup')" class="btn btn-primary btn-cta" id="hero-cta">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 12.6A5.6 5.6 0 1 1 8 2.4a5.6 5.6 0 0 1 0 11.2zM6.3 5.1l4.2 2.5c.3.2.3.6 0 .8L6.3 10.9c-.3.2-.7 0-.7-.4V5.5c0-.4.4-.6.7-.4z" fill="currentColor"/>
                 </svg>
@@ -3631,9 +3631,14 @@
         <p class="pay-desc">O código PIX é gerado na hora. Você tem 30 minutos para pagar. A licença ativa automaticamente após a confirmação.</p>
         <button class="btn btn-primary" style="width:100%;justify-content:center" id="btnGerarPIX" onclick="gerarCobranca('PIX')">Gerar QR Code / Copia e cola</button>
         <div class="pay-result" id="pixResult">
+          <!-- QR Code gerado via API pública de QR -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:.75rem">
+            <img id="pixQrImg" src="" alt="QR Code PIX" style="width:180px;height:180px;border-radius:8px;border:1px solid var(--slate-200);display:none" />
+            <button class="copy-btn" id="btnCopiarQR" style="display:none" onclick="copiarQR()">📋 Copiar QR Code</button>
+          </div>
           <div style="font-size:.78rem;color:var(--slate-500);margin-bottom:.35rem">Copia e cola PIX:</div>
           <div class="pix-code" id="pixCode">—</div>
-          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pixCode').textContent).then(()=>toast('PIX copiado!','success'))">Copiar código</button>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pixCode').textContent).then(()=>toast('Código PIX copiado!','success'))">Copiar código</button>
         </div>
       </div>
 
@@ -3925,9 +3930,13 @@
     ================================================ */
     const authDialog = document.getElementById('authDialog');
 
-    document.getElementById('btnOpenAuth')?.addEventListener('click', () => {
+    // openAuth — chamada pelos botões CTA de toda a página
+    function openAuth(tab = 'login') {
+      authSwitchTab(tab);
       if (authDialog.showModal) authDialog.showModal();
-    });
+    }
+
+    document.getElementById('btnOpenAuth')?.addEventListener('click', () => openAuth('login'));
     document.getElementById('authDialogClose')?.addEventListener('click', () => authDialog.close());
     authDialog?.addEventListener('click', e => { if (e.target === authDialog) authDialog.close(); });
 
@@ -4349,14 +4358,32 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Erro ao gerar cobrança');
 
-        if (forma === 'PIX' && data.pixCopiaECola) {
-          document.getElementById('pixCode').textContent = data.pixCopiaECola;
-          document.getElementById('pixResult').classList.add('show');
-          toast('PIX gerado! Copie o código abaixo.', 'success');
-        } else if (forma === 'BOLETO' && data.bankSlipUrl) {
-          document.getElementById('boletoLink').href = data.bankSlipUrl;
-          document.getElementById('boletoResult').classList.add('show');
-          toast('Boleto gerado!', 'success');
+        if (forma === 'PIX') {
+          if (data.pixCopiaECola) {
+            document.getElementById('pixCode').textContent = data.pixCopiaECola;
+            // Gera QR code via API pública (sem dependência externa)
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.pixCopiaECola)}`;
+            const qrImg = document.getElementById('pixQrImg');
+            qrImg.src = qrUrl;
+            qrImg.style.display = 'block';
+            document.getElementById('btnCopiarQR').style.display = 'inline-flex';
+            document.getElementById('pixResult').classList.add('show');
+            toast('PIX gerado! Escaneie o QR ou copie o código.', 'success');
+          } else if (data.invoiceUrl) {
+            toast('PIX disponível na fatura. Abrindo...', 'success', 4000);
+            window.open(data.invoiceUrl, '_blank');
+          } else {
+            toast('Assinatura criada! O PIX será enviado por e-mail em instantes.', 'success', 5000);
+          }
+        } else if (forma === 'BOLETO') {
+          const url = data.bankSlipUrl || data.invoiceUrl;
+          if (url) {
+            document.getElementById('boletoLink').href = url;
+            document.getElementById('boletoResult').classList.add('show');
+            toast('Boleto gerado!', 'success');
+          } else {
+            toast('Boleto será enviado para seu e-mail em instantes.', 'success', 5000);
+          }
         } else if (forma === 'CREDIT_CARD') {
           toast('Pagamento aprovado! Sua licença está ativa.', 'success', 5000);
           payDialog.close();
@@ -4370,7 +4397,27 @@
       }
     }
 
-    // Estado inicial do modal de pagamento já gerenciado por selectPayMethod()
+    function copiarQR() {
+      const img = document.getElementById('pixQrImg');
+      // Tenta copiar a imagem para a área de transferência
+      fetch(img.src)
+        .then(r => r.blob())
+        .then(blob => {
+          try {
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            toast('QR Code copiado!', 'success');
+          } catch {
+            // Fallback: baixa a imagem
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = 'pix-qrcode.png';
+            a.click();
+            toast('QR Code baixado!', 'success');
+          }
+        });
+    }
+
+    /* Estado inicial do modal de pagamento já gerenciado por selectPayMethod() */
   </script>
 
   <script>
